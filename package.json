@@ -11,7 +11,8 @@
     "watch": "node_modules/.bin/webpack -v -d --progress --watch",
     "test": "node_modules/.bin/karma start --single-run --browsers Chrome",
     "start": "node_modules/.bin/webpack-dev-server --content-base public/ --output-public-path /latest --hot",
-    "lock": "rm -rf npm-shrinkwrap.json node_modules && npm install --silent && npm shrinkwrap"
+    "lock": "rm -rf npm-shrinkwrap.json node_modules && npm install --silent && npm shrinkwrap",
+    "prepublish": "npm run build"
   },
   "author": {
     "name": "Ionut Stoica",
@@ -24,7 +25,8 @@
   ],
   "dependencies": {
     "clappr": "0.2.52",
-    "clappr-zepto": "0.0.4"
+    "clappr-zepto": "0.0.4",
+    "mousetrap": "^1.6.0"
   },
   "devDependencies": {
     "babel-core": "^6.9.1",
@@ -43,6 +45,7 @@
     "eslint-plugin-import": "^1.8.1",
     "eslint-plugin-jsx-a11y": "^1.2.2",
     "eslint-plugin-react": "^5.1.1",
+    "file-loader": "^0.8.5",
     "html-loader": "^0.4.3",
     "karma": "^0.13.22",
     "karma-chai": "^0.1.0",

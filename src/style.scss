@@ -1,0 +1,89 @@
+//colors
+$color_cerulean: #00b7ea;
+$color_amber: #febf04;
+$color_starship: #d2ff52;
+$color_woodsmoke: #111;
+$color_mine_shaft: #333;
+$color_tundora: #444;
+$color_storm_dust: #666;
+$color_gallery: #eee;
+
+//fonts
+$font_monospaced: Consolas, Lucida Console, Monaco, monospace;
+
+[data-player] div.playback-control {
+  float: left;
+  > {
+    .playback-control-actions {
+      display: inline-block;
+      margin-left: 1px;
+      margin-right: 1px;
+      height: 28px;
+      &:hover {
+        background: $color_gallery;
+      }
+      > button {
+        outline: none;
+        cursor: pointer;
+        border: 1px solid $color_tundora;
+        margin: 1px;
+        text-align: center;
+        width: 35px;
+        height: 26px;
+        > sub {
+          outline: none;
+          position: relative;
+          display: inline-block;
+          background: $color_gallery;
+          //Instead of the line below you could use @include border-radius($radius, $vertical-radius)
+          border-radius: 15px;
+          width: 25px;
+          border: 1px solid;
+          left: -2px;
+          bottom: 0;
+          font-weight: bold;
+          font-family: $font_monospaced;
+          font-size: 11px;
+          &.playback-control-action-highlight {
+            background: $color_amber;
+            border-color: $color_mine_shaft;
+            color: $color_mine_shaft;
+            position: relative;
+            top: 1px;
+            left: 1px;
+          }
+        }
+        &:hover {
+          background: $color_mine_shaft;
+          color: $color_gallery;
+          > sub {
+            border-color: $color_gallery;
+            color: $color_mine_shaft;
+          }
+        }
+        &:active {
+          background: $color_storm_dust;
+          color: $color_mine_shaft;
+          border-color: $color_woodsmoke;
+          position: relative;
+          top: 1px;
+          > sub {
+            background: $color_woodsmoke;
+            color: $color_storm_dust;
+            border-color: $color_woodsmoke;
+            font-weight: bold;
+          }
+        }
+      }
+      > button::-moz-focus-inner {
+        border: 0;
+      }
+    }
+    .playback-control-actions[data-step-scale="seconds"] > button {
+      background: $color_cerulean;
+    }
+    .playback-control-actions[data-step-scale="frames"] > button {
+      background: $color_starship;
+    }
+  }
+}

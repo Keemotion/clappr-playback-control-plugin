@@ -16,6 +16,7 @@ module.exports = {
       'src/plugin'
     ),
   ],
+  devtool: 'source-map',
   plugins: pluginsList,
   externals: {
     clappr: 'Clappr',
@@ -41,7 +42,12 @@ module.exports = {
         include: path.resolve(__dirname, 'src'),
       },
       {
-        test: /\.html/, loader: 'html?minimize=false',
+        test: /\.html/,
+        loader: 'html?minimize=false',
+      },
+      {
+        test: /\.(png|woff|eot|ttf|swf)/,
+        loader: 'file-loader',
       },
     ],
   },
