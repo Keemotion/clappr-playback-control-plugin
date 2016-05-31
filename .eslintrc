@@ -1,0 +1,26 @@
+{
+  "extends": "airbnb",
+  "parser": "babel-eslint",
+  "rules": {
+    "max-len": [
+      "error", {
+        "code": 120,
+        "ignoreUrls": true,
+        "ignoreComments": true
+      }
+    ]
+  },
+  "plugins": [
+    "babel",
+    "import"
+  ],
+  "env": {
+    "browser": true,
+    "node": true,
+    "mocha": true,
+    "es6": true
+  },
+  "ecmaFeatures": {
+    "modules": true
+  }
+}
