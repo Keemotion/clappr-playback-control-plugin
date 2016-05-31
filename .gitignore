@@ -1,3 +1,10 @@
-build
-node_modules
-*.swp
+/build
+/coverage
+/dist
+/node_modules
+/tmp
+/.metadata
+/.settings
+/.project
+/.tmp
+/.idea
