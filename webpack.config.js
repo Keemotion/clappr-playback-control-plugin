@@ -38,14 +38,13 @@ module.exports = {
   plugins: pluginsList,
   externals: {
     clappr: 'Clappr',
-    'clappr-zepto': 'clappr-zepto',
   },
   module: {
     loaders: [
       {
         test: /\.js$/,
-        loader: 'babel-loader',
-        exclude: /node_modules/,
+        loader: 'babel',
+        exclude: /(node_modules|bower_components)/,
       },
       {
         test: /\.scss$/,
@@ -71,6 +70,7 @@ module.exports = {
   },
   resolve: {
     extensions: ['', '.js'],
+    root: path.resolve(__dirname, 'src'),
   },
   output: {
     path: path.resolve(__dirname, 'dist'),
