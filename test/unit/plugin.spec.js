@@ -9,7 +9,6 @@ const expect = chai.expect;
 
 describe('EntryPoint', () => {
   beforeEach(() => {
-    const main = PlaybackControl;
-    expect(main).to.not.be(null);
+    expect(PlaybackControl).not.toBe(null);
   });
 });

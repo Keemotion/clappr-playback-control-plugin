@@ -43,11 +43,12 @@ module.exports = {
     loaders: [
       {
         test: /\.js$/,
-        loader: 'babel',
         exclude: /(node_modules|bower_components)/,
+        loader: 'babel-loader',
       },
       {
         test: /\.scss$/,
+        include: path.resolve(__dirname, 'src'),
         loaders: [
           'css',
           [
@@ -56,7 +57,6 @@ module.exports = {
             '&includePaths[]=', path.resolve(__dirname, './src/base/scss'),
           ].join(''),
         ],
-        include: path.resolve(__dirname, 'src'),
       },
       {
         test: /\.html/,

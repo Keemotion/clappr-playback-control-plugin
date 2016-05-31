@@ -1,19 +1,17 @@
-// Karma configuration
-// Generated on Tue May 31 2016 14:22:59 GMT+0200 (Romance Summer Time)
+const path = require('path');
 const webpack = require('karma-webpack');
 const webpackConfig = require('./webpack.config');
 webpackConfig.externals = {};
 webpackConfig.devtool = 'inline-source-map';
+webpackConfig.entry = path.join(__dirname, 'test/main.js');
 
-module.exports = function exports(config) {
+module.exports = (config) => {
   config.set({
-    frameworks: [
-      'mocha',
-    ],
+    frameworks: ['mocha'],
     files: [
       './node_modules/phantomjs-polyfill/bind-polyfill.js',
-      './node_modules/clappr/dist/clappr.min.js',
-      'test/unit/**/*.spec.js',
+      'src/plugin.js',
+      'test/**/*.spec.js',
     ],
     plugins: [
       webpack,
@@ -24,10 +22,10 @@ module.exports = function exports(config) {
       'karma-coverage',
       'karma-spec-reporter',
     ],
-    browsers: ['PhantomJS'],
+    browsers: ['Firefox'],
     preprocessors: {
-      'test/unit/**/*.spec.js': ['webpack'],
-      'src/**/*.js': ['webpack'],
+      'src/plugin.js': ['webpack'],
+      'test/**/*.spec.js': ['webpack'],
     },
     reporters: ['spec', 'coverage'],
     coverageReporter: {

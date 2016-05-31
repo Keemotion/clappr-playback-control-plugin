@@ -22,5 +22,19 @@
   },
   "ecmaFeatures": {
     "modules": true
+  },
+  "settings": {
+    "import/resolver": {
+      "node": {
+        "extensions": [".js"],
+        "moduleDirectory": [
+          ".",
+          "sources/modules",
+          "src",
+          "lib",
+          "node_modules"
+        ]
+      }
+    }
   }
 }
