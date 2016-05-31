@@ -2,12 +2,30 @@
 const path = require('path');
 // vendors
 const webpack = require('webpack');
+const argv = require('yargs').argv;
 // project
+const packageInfo = require(path.join(__dirname, 'package.json'));
 // locals
+const environment = argv.environment || packageInfo.config.environment;
+const build = argv.build || packageInfo.config.build;
+const pluginVersion = packageInfo.version;
 const pluginFileName = 'clappr-playback-rate-plugin.js';
 const pluginsList = [
   new webpack.optimize.OccurenceOrderPlugin(),
+  new webpack.DefinePlugin(
+    {
+      'process.env.NODE_ENV': JSON.stringify(environment),
+      'global.ENVIRONMENT': environment,
+      'global.BUILD': build,
+      'global.VERSION': pluginVersion,
+    }
+  ),
 ];
+// patch the environment
+process.env.NODE_ENV = JSON.stringify(environment);
+global.ENVIRONMENT = environment;
+global.BUILD = build;
+global.VERSION = pluginVersion;
 // webpack build configuration
 module.exports = {
   entry: [

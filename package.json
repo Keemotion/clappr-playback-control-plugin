@@ -5,6 +5,10 @@
   "license": "MIT",
   "repository": "Keemotion/clappr-playback-control-plugin",
   "main": "index.js",
+  "config": {
+    "environment": "development",
+    "build": "debug"
+  },
   "scripts": {
     "release": "node_modules/.bin/webpack -v -d --progress --optimize-minimize --optimize-dedupe --output-filename clappr-playback-control-plugin.min.js",
     "build": "node_modules/.bin/webpack -v -d --progress",
@@ -12,6 +16,7 @@
     "test": "node_modules/.bin/karma start --single-run --browsers Chrome",
     "start": "node_modules/.bin/webpack-dev-server --content-base public/ --output-public-path /latest --hot",
     "lock": "rm -rf npm-shrinkwrap.json node_modules && npm install --silent && npm shrinkwrap",
+    "clean": "rimraf dist",
     "prepublish": "npm run build"
   },
   "author": {
@@ -55,8 +60,10 @@
     "mocha": "^2.5.3",
     "mocha-loader": "^0.7.1",
     "node-sass": "^3.7.0",
+    "rimraf": "^2.5.2",
     "sass-loader": "^3.2.0",
     "webpack": "^1.13.1",
-    "webpack-dev-server": "^1.14.1"
+    "webpack-dev-server": "^1.14.1",
+    "yargs": "^4.7.1"
   }
 }

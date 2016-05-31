@@ -1,3 +1,4 @@
+/* global PLUGIN_VERSION */
 // node
 // vendors
 import Clappr from 'clappr';
@@ -15,21 +16,14 @@ const BUTTON_STATE_UP = 'up';
 const FPS_DEFAULT = 29;
 
 class PlaybackControl extends Clappr.UICorePlugin {
+  // properties
   get name() { return 'playback_control'; }
-  get template() {
-    return Clappr.template(PlaybackControlHTML);
-  }
-  get attributes() {
-    return {
-      class: 'playback-control',
-    };
-  }
-  get mediaControl() {
-    return this.core.mediaControl;
-  }
-  get player() {
-    return this.mediaControl.container;
-  }
+  get version() { return PLUGIN_VERSION; }
+  get template() { return Clappr.template(PlaybackControlHTML); }
+  get attributes() { return { class: 'playback-control' }; }
+  get mediaControl() { return this.core.mediaControl; }
+  get player() { return this.mediaControl.container; }
+  // methods
   onContainerChanged() {
     this.invalidate();
   }
