@@ -29,14 +29,14 @@ class PlaybackControl extends Clappr.UICorePlugin {
   }
   seekScaleValue(scale, value) {
     switch (scale) {
-      case SCALE_FRAMES:
-        this.seekRelativeFrames(value);
-        break;
-      case SCALE_SECONDS:
-        this.seekRelativeSeconds(value);
-        break;
-      default:
-        break;
+    case SCALE_FRAMES:
+      this.seekRelativeFrames(value);
+      break;
+    case SCALE_SECONDS:
+      this.seekRelativeSeconds(value);
+      break;
+    default:
+      break;
     }
   }
   findButton(scale, value) {
@@ -46,14 +46,14 @@ class PlaybackControl extends Clappr.UICorePlugin {
   highlightButton(scale, value, state) {
     const button = this.findButton(scale, value);
     switch (state) {
-      case BUTTON_STATE_DOWN:
-        button.children()[1].className = 'playback-control-action-highlight';
-        break;
-      case BUTTON_STATE_UP:
-        button.children()[1].className = '';
-        break;
-      default:
-        break;
+    case BUTTON_STATE_DOWN:
+      button.children()[1].className = 'playback-control-action-highlight';
+      break;
+    case BUTTON_STATE_UP:
+      button.children()[1].className = '';
+      break;
+    default:
+      break;
     }
     return button;
   }
@@ -79,9 +79,7 @@ class PlaybackControl extends Clappr.UICorePlugin {
     this.listenTo(this.mediaControl, Clappr.Events.MEDIACONTROL_RENDERED, this.render);
     this.listenTo(this.mediaControl, Clappr.Events.MEDIACONTROL_CONTAINERCHANGED, this.onContainerChanged);
     // non-clappr events
-    MouseTrap.addKeycodes({
-      144: 'numlock',
-    });
+    MouseTrap.addKeycodes({ 144: 'numlock' });
     // standard keyboard shortcuts
     MouseTrap.bind('q', () => this.highlightButton(SCALE_SECONDS, -1, BUTTON_STATE_DOWN), 'keydown');
     MouseTrap.bind('q', () => {

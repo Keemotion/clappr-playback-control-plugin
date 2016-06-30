@@ -10,7 +10,7 @@
     "build": "debug"
   },
   "scripts": {
-    "release": "node_modules/.bin/webpack --config webpack.config.js -v -d --progress --optimize-minimize --optimize-dedupe --output-filename clappr-playback-control-plugin.min.js",
+    "release": "node_modules/.bin/webpack --config webpack.config.js -v --progress --environment=production --optimize-minimize --optimize-dedupe",
     "build": "node_modules/.bin/webpack --config webpack.config.js -v -d --progress",
     "watch": "node_modules/.bin/webpack --config webpack.config.js -v -d --progress --watch",
     "test": "node_modules/.bin/karma start --single-run --no-auto-watch karma.conf.js",

@@ -9,7 +9,6 @@ const packageInfo = require(path.join(__dirname, 'package.json'));
 const environment = argv.environment || packageInfo.config.environment;
 const build = argv.build || packageInfo.config.build;
 const pluginVersion = packageInfo.version;
-const pluginFileName = 'clappr-playback-control-plugin.js';
 const pluginsList = [
   new webpack.optimize.OccurenceOrderPlugin(),
   new webpack.DefinePlugin(
@@ -26,15 +25,27 @@ process.env.NODE_ENV = JSON.stringify(environment);
 global.ENVIRONMENT = environment;
 global.BUILD = build;
 global.VERSION = pluginVersion;
+// env dependent
+var pluginFileName = null;
+var devtool = null;
+if (environment === 'production') {
+  pluginFileName = 'clappr-playback-control-plugin.min.js';
+} else {
+  devtool = 'source-map';
+  pluginFileName = 'clappr-playback-control-plugin.js';
+}
+const output = {
+  path: path.resolve(__dirname, 'dist'),
+  publicPath: '<%=baseUrl%>/',
+  filename: pluginFileName,
+  library: 'PlaybackControlPlugin',
+  libraryTarget: 'umd',
+  pathinfo: false
+};
 // webpack build configuration
 module.exports = {
-  entry: [
-    path.join(
-      __dirname,
-      'src/plugin'
-    ),
-  ],
-  devtool: 'source-map',
+  entry: path.join(__dirname, 'src/plugin'),
+  devtool: devtool,
   plugins: pluginsList,
   externals: {
     clappr: 'Clappr',
@@ -72,12 +83,5 @@ module.exports = {
     extensions: ['', '.js'],
     root: path.resolve(__dirname, 'src'),
   },
-  output: {
-    path: path.resolve(__dirname, 'dist'),
-    publicPath: '<%=baseUrl%>/',
-    filename: pluginFileName,
-    library: 'PlaybackControlPlugin',
-    libraryTarget: 'umd',
-    pathinfo: false
-  },
+  output: output,
 };
