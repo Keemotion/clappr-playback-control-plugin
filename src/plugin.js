@@ -23,6 +23,7 @@ class PlaybackControl extends Clappr.UICorePlugin {
   get attributes() { return { class: 'playback-control' }; }
   get mediaControl() { return this.core.mediaControl; }
   get player() { return this.mediaControl.container; }
+  get config() { return this.core.options.playbackControlConfig || { keyBindings: [] }; }
   // methods
   onContainerChanged() {
     this.invalidate();
@@ -74,7 +75,9 @@ class PlaybackControl extends Clappr.UICorePlugin {
     return false;
   }
   bindEvents() {
+    const config = this.config;
     const player = this.player;
+    console.log('plugin config', config);
     // clappr events
     this.listenTo(this.mediaControl, Clappr.Events.MEDIACONTROL_RENDERED, this.render);
     this.listenTo(this.mediaControl, Clappr.Events.MEDIACONTROL_CONTAINERCHANGED, this.onContainerChanged);
