@@ -9,7 +9,7 @@ const packageInfo = require(path.join(__dirname, 'package.json'));
 const environment = argv.environment || packageInfo.config.environment;
 const build = argv.build || packageInfo.config.build;
 const pluginVersion = packageInfo.version;
-const pluginFileName = 'clappr-playback-rate-plugin.js';
+const pluginFileName = 'clappr-playback-control-plugin.js';
 const pluginsList = [
   new webpack.optimize.OccurenceOrderPlugin(),
   new webpack.DefinePlugin(
@@ -78,5 +78,6 @@ module.exports = {
     filename: pluginFileName,
     library: 'PlaybackControlPlugin',
     libraryTarget: 'umd',
+    pathinfo: false
   },
 };
