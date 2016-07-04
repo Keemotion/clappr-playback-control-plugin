@@ -18,7 +18,8 @@
     "start": "node_modules/.bin/webpack-dev-server --content-base public/ --output-public-path /latest --hot",
     "lock": "rm -rf npm-shrinkwrap.json node_modules && npm install --silent && npm shrinkwrap",
     "clean": "rimraf dist",
-    "prepublish": "npm run build && npm run release"
+    "prepublish": "npm run build && npm run release",
+    "postinstall": "npm run build && npm run release"
   },
   "author": {
     "name": "Ionut Stoica",
