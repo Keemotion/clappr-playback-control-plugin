@@ -1,7 +1,7 @@
 {
   "name": "clappr-playback-control-plugin",
   "description": "A simple plugin for Clappr that adds support for granular and precise seeking.",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "license": "MIT",
   "repository": "Keemotion/clappr-playback-control-plugin",
   "main": "index.js",
