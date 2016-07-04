@@ -21,6 +21,10 @@
     "prepublish": "npm run build && npm run release",
     "postinstall": "npm run build && npm run release"
   },
+  "files": [
+    "src",
+    "test"
+  ],
   "author": {
     "name": "Ionut Stoica",
     "email": "stoica.ionut@gmail.com",
