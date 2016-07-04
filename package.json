@@ -1,13 +1,13 @@
 {
   "name": "clappr-playback-control-plugin",
   "description": "A simple plugin for Clappr that adds support for granular and precise seeking.",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "license": "MIT",
   "repository": "Keemotion/clappr-playback-control-plugin",
   "main": "index.js",
   "config": {
-    "environment": "development",
-    "build": "debug"
+    "environment": "production",
+    "build": "release"
   },
   "scripts": {
     "release": "node_modules/.bin/webpack --config webpack.config.js -v --progress --environment=production --optimize-minimize --optimize-dedupe",
@@ -22,17 +22,9 @@
     "postinstall": "npm run build && npm run release"
   },
   "files": [
-    "src",
-    "test",
-    ".babelrc",
-    ".eslintignore",
-    ".eslintrc",
-    ".npmignore",
+    "dist",
     "index.js",
-    "karma.conf.js",
-    "LICENSE",
-    "README.md",
-    "webpack.config.js"
+    "LICENSE"
   ],
   "author": {
     "name": "Ionut Stoica",
