@@ -29,7 +29,8 @@ global.VERSION = pluginVersion;
 // env dependent
 var pluginFileName = null;
 var devtool = null;
-if (environment === 'production') {
+var isProduction = environment === 'production';
+if (isProduction) {
   pluginFileName = 'clappr-playback-control-plugin.min.js';
 } else {
   devtool = 'source-map';
@@ -49,8 +50,8 @@ module.exports = {
   devtool: devtool,
   plugins: pluginsList,
   externals: {
-    Clappr: 'Clappr',
-    clappr: 'Clappr',
+    Clappr: "Clappr",
+    "clappr-zepto": "clappr-zepto"
   },
   module: {
     loaders: [
@@ -58,6 +59,9 @@ module.exports = {
         test: /\.js$/,
         exclude: /(node_modules|bower_components)/,
         loader: 'babel-loader',
+        query: {
+          compact: isProduction,
+        }
       },
       {
         test: /\.scss$/,

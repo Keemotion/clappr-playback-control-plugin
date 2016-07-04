@@ -1,7 +1,7 @@
 /* global PLUGIN_VERSION */
 // node
 // vendors
-import Clappr from 'clappr';
+import { Events, UICorePlugin, Styler, template } from 'Clappr';
 import MouseTrap from 'mousetrap';
 // project
 import PlaybackControlHTML from './view.html';
@@ -15,11 +15,11 @@ const BUTTON_STATE_UP = 'up';
 
 const FPS_DEFAULT = 29;
 
-class PlaybackControl extends Clappr.UICorePlugin {
+class PlaybackControl extends UICorePlugin {
   // properties
   get name() { return 'playback_control'; }
   get version() { return PLUGIN_VERSION; }
-  get template() { return Clappr.template(PlaybackControlHTML); }
+  get template() { return template(PlaybackControlHTML); }
   get attributes() { return { class: 'playback-control' }; }
   get mediaControl() { return this.core.mediaControl; }
   get player() { return this.mediaControl.container; }
@@ -75,12 +75,10 @@ class PlaybackControl extends Clappr.UICorePlugin {
     return false;
   }
   bindEvents() {
-    const config = this.config;
+    // const config = this.config;
     const player = this.player;
-    console.log('plugin config', config);
-    // clappr events
-    this.listenTo(this.mediaControl, Clappr.Events.MEDIACONTROL_RENDERED, this.render);
-    this.listenTo(this.mediaControl, Clappr.Events.MEDIACONTROL_CONTAINERCHANGED, this.onContainerChanged);
+    this.listenTo(this.mediaControl, Events.MEDIACONTROL_RENDERED, this.render);
+    this.listenTo(this.mediaControl, Events.MEDIACONTROL_CONTAINERCHANGED, this.onContainerChanged);
     // non-clappr events
     MouseTrap.addKeycodes({ 144: 'numlock' });
     // standard keyboard shortcuts
@@ -155,7 +153,7 @@ class PlaybackControl extends Clappr.UICorePlugin {
     }
   }
   render() {
-    const style = Clappr.Styler.getStyleFor(PlaybackControlCSS);
+    const style = Styler.getStyleFor(PlaybackControlCSS);
     this.$el
       .html(this.template())
       .append(style);
