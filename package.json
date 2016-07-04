@@ -11,7 +11,7 @@
   },
   "scripts": {
     "release": "node_modules/.bin/webpack --config webpack.config.js -v --progress --environment=production --optimize-minimize --optimize-dedupe",
-    "build": "node_modules/.bin/webpack --config webpack.config.js -v -d --progress",
+    "build": "node_modules/.bin/webpack --config webpack.config.js -v -d --environment=development --progress",
     "watch": "node_modules/.bin/webpack --config webpack.config.js -v -d --progress --watch",
     "test": "node_modules/.bin/karma start --single-run --no-auto-watch karma.conf.js",
     "test_watch": "node_modules/.bin/karma start  --auto-watch --no-single-run karma.conf.js",

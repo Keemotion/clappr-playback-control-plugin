@@ -25,6 +25,7 @@ process.env.NODE_ENV = JSON.stringify(environment);
 global.ENVIRONMENT = environment;
 global.BUILD = build;
 global.VERSION = pluginVersion;
+// console.log('BUILD PLUGIN >>>>>>>>>>>> ', process.env.NODE_ENV);
 // env dependent
 var pluginFileName = null;
 var devtool = null;
@@ -48,6 +49,7 @@ module.exports = {
   devtool: devtool,
   plugins: pluginsList,
   externals: {
+    Clappr: 'Clappr',
     clappr: 'Clappr',
   },
   module: {
