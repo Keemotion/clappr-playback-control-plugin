@@ -23,7 +23,16 @@
   },
   "files": [
     "src",
-    "test"
+    "test",
+    ".babelrc",
+    ".eslintignore",
+    ".eslintrc",
+    ".npmignore",
+    "index.js",
+    "karma.conf.js",
+    "LICENSE",
+    "README.md",
+    "webpack.config.js"
   ],
   "author": {
     "name": "Ionut Stoica",
