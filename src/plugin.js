@@ -23,20 +23,21 @@ class PlaybackControl extends Clappr.UICorePlugin {
   get attributes() { return { class: 'playback-control' }; }
   get mediaControl() { return this.core.mediaControl; }
   get player() { return this.mediaControl.container; }
+  get config() { return this.core.options.playbackControlConfig || { keyBindings: [] }; }
   // methods
   onContainerChanged() {
     this.invalidate();
   }
   seekScaleValue(scale, value) {
     switch (scale) {
-      case SCALE_FRAMES:
-        this.seekRelativeFrames(value);
-        break;
-      case SCALE_SECONDS:
-        this.seekRelativeSeconds(value);
-        break;
-      default:
-        break;
+    case SCALE_FRAMES:
+      this.seekRelativeFrames(value);
+      break;
+    case SCALE_SECONDS:
+      this.seekRelativeSeconds(value);
+      break;
+    default:
+      break;
     }
   }
   findButton(scale, value) {
@@ -46,14 +47,14 @@ class PlaybackControl extends Clappr.UICorePlugin {
   highlightButton(scale, value, state) {
     const button = this.findButton(scale, value);
     switch (state) {
-      case BUTTON_STATE_DOWN:
-        button.children()[1].className = 'playback-control-action-highlight';
-        break;
-      case BUTTON_STATE_UP:
-        button.children()[1].className = '';
-        break;
-      default:
-        break;
+    case BUTTON_STATE_DOWN:
+      button.children()[1].className = 'playback-control-action-highlight';
+      break;
+    case BUTTON_STATE_UP:
+      button.children()[1].className = '';
+      break;
+    default:
+      break;
     }
     return button;
   }
@@ -74,14 +75,14 @@ class PlaybackControl extends Clappr.UICorePlugin {
     return false;
   }
   bindEvents() {
+    const config = this.config;
     const player = this.player;
+    console.log('plugin config', config);
     // clappr events
     this.listenTo(this.mediaControl, Clappr.Events.MEDIACONTROL_RENDERED, this.render);
     this.listenTo(this.mediaControl, Clappr.Events.MEDIACONTROL_CONTAINERCHANGED, this.onContainerChanged);
     // non-clappr events
-    MouseTrap.addKeycodes({
-      144: 'numlock',
-    });
+    MouseTrap.addKeycodes({ 144: 'numlock' });
     // standard keyboard shortcuts
     MouseTrap.bind('q', () => this.highlightButton(SCALE_SECONDS, -1, BUTTON_STATE_DOWN), 'keydown');
     MouseTrap.bind('q', () => {
