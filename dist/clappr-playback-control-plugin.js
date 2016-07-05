@@ -1,12 +1,12 @@
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
-		module.exports = factory(require("Clappr"));
+		module.exports = factory(require("clappr"));
 	else if(typeof define === 'function' && define.amd)
-		define(["Clappr"], factory);
+		define(["clappr"], factory);
 	else if(typeof exports === 'object')
-		exports["PlaybackControlPlugin"] = factory(require("Clappr"));
+		exports["PlaybackControlPlugin"] = factory(require("clappr"));
 	else
-		root["PlaybackControlPlugin"] = factory(root["Clappr"]);
+		root["PlaybackControlPlugin"] = factory(root["clappr"]);
 })(this, function(__WEBPACK_EXTERNAL_MODULE_5__) {
 return /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
@@ -67,7 +67,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var _get = function get(object, property, receiver) { if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { return get(parent, property, receiver); } } else if ("value" in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } };
 	
-	var _Clappr = __webpack_require__(/*! Clappr */ 5);
+	var _clappr = __webpack_require__(/*! clappr */ 5);
+	
+	var _clappr2 = _interopRequireDefault(_clappr);
 	
 	var _mousetrap = __webpack_require__(/*! mousetrap */ 4);
 	
@@ -102,8 +104,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var FPS_DEFAULT = 29;
 	
-	var PlaybackControl = function (_UICorePlugin) {
-	  _inherits(PlaybackControl, _UICorePlugin);
+	var PlaybackControl = function (_Clappr$UICorePlugin) {
+	  _inherits(PlaybackControl, _Clappr$UICorePlugin);
 	
 	  function PlaybackControl() {
 	    _classCallCheck(this, PlaybackControl);
@@ -181,8 +183,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	      // const config = this.config;
 	      var player = this.player;
-	      this.listenTo(this.mediaControl, _Clappr.Events.MEDIACONTROL_RENDERED, this.render);
-	      this.listenTo(this.mediaControl, _Clappr.Events.MEDIACONTROL_CONTAINERCHANGED, this.onContainerChanged);
+	      this.listenTo(this.mediaControl, _clappr2.default.Events.MEDIACONTROL_RENDERED, this.render);
+	      this.listenTo(this.mediaControl, _clappr2.default.Events.MEDIACONTROL_CONTAINERCHANGED, this.onContainerChanged);
 	      // non-clappr events
 	      _mousetrap2.default.addKeycodes({ 144: 'numlock' });
 	      // standard keyboard shortcuts
@@ -297,7 +299,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }, {
 	    key: 'render',
 	    value: function render() {
-	      var style = _Clappr.Styler.getStyleFor(_style2.default);
+	      var style = _clappr2.default.Styler.getStyleFor(_style2.default);
 	      this.$el.html(this.template()).append(style);
 	      this.$el.find('[type="button"]').off('click').on('click', this.onButtonClick.bind(this));
 	      this.$el.find('.playback-control-actions').off('DOMMouseScroll').on('DOMMouseScroll', this.onActionsMouseWheel.bind(this));
@@ -378,7 +380,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }, {
 	    key: 'template',
 	    get: function get() {
-	      return (0, _Clappr.template)(_view2.default);
+	      return _clappr2.default.template(_view2.default);
 	    }
 	  }, {
 	    key: 'attributes',
@@ -403,7 +405,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }]);
 	
 	  return PlaybackControl;
-	}(_Clappr.UICorePlugin);
+	}(_clappr2.default.UICorePlugin);
 	
 	exports.default = PlaybackControl;
 
@@ -1542,7 +1544,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ },
 /* 5 */
 /*!*************************!*\
-  !*** external "Clappr" ***!
+  !*** external "clappr" ***!
   \*************************/
 /***/ function(module, exports) {
 

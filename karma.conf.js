@@ -20,12 +20,12 @@ module.exports = (config) => {
       'karma-firefox-launcher',
       'karma-phantomjs-launcher',
       'karma-coverage',
-      'karma-spec-reporter',
+      'karma-spec-reporter'
     ],
     browsers: ['Firefox'],
     preprocessors: {
       'src/plugin.js': ['webpack'],
-      'test/**/*.spec.js': ['webpack'],
+      'test/**/*.spec.js': ['webpack']
     },
     reporters: ['spec', 'coverage'],
     coverageReporter: {

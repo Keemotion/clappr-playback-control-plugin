@@ -31,9 +31,9 @@ var pluginFileName = null;
 var devtool = null;
 var isProduction = environment === 'production';
 if (isProduction) {
+  devtool = 'source-map';
   pluginFileName = 'clappr-playback-control-plugin.min.js';
 } else {
-  devtool = 'source-map';
   pluginFileName = 'clappr-playback-control-plugin.js';
 }
 const output = {
@@ -50,7 +50,7 @@ module.exports = {
   devtool: devtool,
   plugins: pluginsList,
   externals: {
-    Clappr: "Clappr",
+    "clappr": "clappr",
     "clappr-zepto": "clappr-zepto"
   },
   module: {
