@@ -2,7 +2,7 @@
 // node
 // vendors
 import Clappr from 'clappr';
-import MouseTrap from 'mousetrap';
+import Mousetrap from 'mousetrap';
 // project
 import PlaybackControlHTML from './view.html';
 import PlaybackControlCSS from './style.scss';
@@ -13,7 +13,9 @@ const SCALE_SECONDS = 'seconds';
 const BUTTON_STATE_DOWN = 'down';
 const BUTTON_STATE_UP = 'up';
 
-const FPS_DEFAULT = 29;
+const defaults = {
+  fps: 29
+};
 
 class PlaybackControl extends Clappr.UICorePlugin {
   // properties
@@ -23,7 +25,96 @@ class PlaybackControl extends Clappr.UICorePlugin {
   get attributes() { return { class: 'playback-control' }; }
   get mediaControl() { return this.core.mediaControl; }
   get player() { return this.mediaControl.container; }
-  get config() { return this.core.options.playbackControlConfig || { keyBindings: [] }; }
+  get config() { return this.core.options.playbackControlConfig || defaults; }
+  get userInputActionsMap() {
+    const actions = {
+      // frame navigation
+      'nav-second-dec': {
+        keys: ['down'],
+        events: {
+          keydown: () => this.highlightButton(SCALE_SECONDS, -1, BUTTON_STATE_DOWN),
+          keyup: () => {
+            this.highlightButton(SCALE_SECONDS, -1, BUTTON_STATE_UP);
+            this.seekRelativeSeconds(-1);
+          }
+        }
+      },
+      'nav-second-inc': {
+        keys: ['up'],
+        events: {
+          keydown: () => this.highlightButton(SCALE_SECONDS, +1, BUTTON_STATE_DOWN),
+          keyup: () => {
+            this.highlightButton(SCALE_SECONDS, +1, BUTTON_STATE_UP);
+            this.seekRelativeSeconds(+1);
+          }
+        }
+      },
+      // time(second) nagiation
+      'nav-frame-dec': {
+        keys: ['left'],
+        events: {
+          keydown: () => this.highlightButton(SCALE_FRAMES, -1, BUTTON_STATE_DOWN),
+          keyup: () => {
+            this.highlightButton(SCALE_FRAMES, -1, BUTTON_STATE_UP);
+            this.seekRelativeFrames(-1);
+          }
+        }
+      },
+      'nav-frame-inc': {
+        keys: ['right'],
+        events: {
+          keydown: () => this.highlightButton(SCALE_FRAMES, +1, BUTTON_STATE_DOWN),
+          keyup: () => {
+            this.highlightButton(SCALE_FRAMES, +1, BUTTON_STATE_UP);
+            this.seekRelativeFrames(+1);
+          }
+        }
+      },
+      // playback control
+      'playback-pauseresume': {
+        keys: ['ctrl+space'],
+        events: {
+          keypress: () => {
+            console.log('I was pressed', e);
+            if (this.player.isPlaying()) {
+              this.player.pause();
+            } else {
+              this.player.play();
+            }
+          }
+        }
+      },
+      'playback-switchrate': {
+        keys: [
+          'ctrl+shift+alt+1',
+          'ctrl+shift+alt+2',
+          'ctrl+shift+alt+3',
+          'ctrl+shift+alt+4',
+          'ctrl+shift+alt+5',
+          'ctrl+shift+alt+6',
+          'ctrl+shift+alt+7',
+          '0',
+          'ctrl+shift+1',
+          'ctrl+shift+2',
+          'ctrl+shift+3',
+          'ctrl+shift+4',
+          'ctrl+shift+5',
+          'ctrl+shift+6',
+          'ctrl+shift+7'
+        ],
+        events: {
+          keypress: (e) => {
+            var value = String.fromCharCode(e.keyCode);
+            var sign = e.altKey ? -1 : 1;
+            var rate = Number(value) * sign;
+            // console.log(e, 'switched playback rate to', e.keyCode, value, rate);
+            this.mediaControl.trigger('playbackRate', rate);
+          }
+        }
+      }
+    };
+    return actions;
+  }
   // methods
   onContainerChanged() {
     this.invalidate();
@@ -75,74 +166,17 @@ class PlaybackControl extends Clappr.UICorePlugin {
     return false;
   }
   bindEvents() {
+    // discard default clappr events
     // const config = this.config;
-    const player = this.player;
     this.listenTo(this.mediaControl, Clappr.Events.MEDIACONTROL_RENDERED, this.render);
     this.listenTo(this.mediaControl, Clappr.Events.MEDIACONTROL_CONTAINERCHANGED, this.onContainerChanged);
     // non-clappr events
-    MouseTrap.addKeycodes({ 144: 'numlock' });
-    // standard keyboard shortcuts
-    MouseTrap.bind('q', () => this.highlightButton(SCALE_SECONDS, -1, BUTTON_STATE_DOWN), 'keydown');
-    MouseTrap.bind('q', () => {
-      this.highlightButton(SCALE_SECONDS, -1, BUTTON_STATE_UP);
-      this.seekRelativeSeconds(-1);
-    }, 'keyup');
-    MouseTrap.bind('w', () => this.highlightButton(SCALE_SECONDS, +1, BUTTON_STATE_DOWN), 'keydown');
-    MouseTrap.bind('w', () => {
-      this.highlightButton(SCALE_SECONDS, +1, BUTTON_STATE_UP);
-      this.seekRelativeSeconds(+1);
-    }, 'keyup');
-    MouseTrap.bind('a', () => this.highlightButton(SCALE_FRAMES, -1, BUTTON_STATE_DOWN), 'keydown');
-    MouseTrap.bind('a', () => {
-      this.highlightButton(SCALE_FRAMES, -1, BUTTON_STATE_UP);
-      this.seekRelativeFrames(-1);
-    }, 'keyup');
-    MouseTrap.bind('s', () => this.highlightButton(SCALE_FRAMES, +1, BUTTON_STATE_DOWN), 'keydown');
-    MouseTrap.bind('s', () => {
-      this.highlightButton(SCALE_FRAMES, +1, BUTTON_STATE_UP);
-      this.seekRelativeFrames(+1);
-    }, 'keyup');
-    MouseTrap.bind('space', () => {
-      if (player.isPlaying()) {
-        player.pause();
-      } else {
-        player.play();
+    Mousetrap.reset();
+    for (let [, userAction] of Object.entries(this.userInputActionsMap)) {
+      for (let [event, callback] of Object.entries(userAction.events)) {
+        Mousetrap.bind(userAction.keys, callback, event);
       }
-    });
-    // shuttle xpress - large wheel with arrow keys fallback(time control)
-    MouseTrap.bind('up', () => this.seekRelativeSeconds(-1));
-    MouseTrap.bind('down', () => this.seekRelativeSeconds(+1));
-    // shuttle xpress - small wheel with arrow keys fallback(time control)
-    MouseTrap.bind('left', () => this.seekRelativeFrames(-1));
-    MouseTrap.bind('right', () => this.seekRelativeFrames(+1));
-    // shuttle xpress - small wheel with ctrl +/- keys combo fallback(frame control)
-    MouseTrap.bind('ctrl+-', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      this.seekRelativeFrames(-1);
-    });
-    MouseTrap.bind(['ctrl+=', 'ctrl+plus'], (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      this.seekRelativeFrames(+1);
-    });
-    // shuttle express - buttons(numeric keys fallback)
-    const switchPlaybackRate = (e, rate) => {
-      e.preventDefault();
-      e.stopPropagation();
-      this.mediaControl.trigger('playbackRate', rate);
-      return false;
-    };
-    MouseTrap.bind('0', (e) => switchPlaybackRate(e, 0.5));
-    MouseTrap.bind(['1', 'numlock+alt+left'], (e) => switchPlaybackRate(e, 1));
-    MouseTrap.bind(['2', 'numlock+ctrl+h'], (e) => switchPlaybackRate(e, 2));
-    MouseTrap.bind(['3', 'ctrl+shift+o', 'numlock+ctrl+i'], (e) => switchPlaybackRate(e, 3));
-    MouseTrap.bind(['4', 'numlock+ctrl+t'], (e) => switchPlaybackRate(e, 4));
-    MouseTrap.bind(['5', 'numlock+alt+right'], (e) => switchPlaybackRate(e, 5));
-    MouseTrap.bind('6', (e) => switchPlaybackRate(e, 6));
-    MouseTrap.bind('7', (e) => switchPlaybackRate(e, 7));
-    MouseTrap.bind('8', (e) => switchPlaybackRate(e, 8));
-    MouseTrap.bind('9', (e) => switchPlaybackRate(e, 9));
+    }
   }
   stopListening() {
     super.stopListening();
@@ -179,7 +213,7 @@ class PlaybackControl extends Clappr.UICorePlugin {
     this.bindEvents();
   }
   getFPS() {
-    let fps = FPS_DEFAULT;
+    let fps = defaults.fps;
     if (this.player && this.player.options && this.player.options.playbackControl) {
       fps = this.player.options.playbackControl.fps || fps;
     }
