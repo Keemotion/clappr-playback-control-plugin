@@ -184,7 +184,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    key: 'bindEvents',
 	    value: function bindEvents() {
 	      // discard default clappr events
-	      this.mediaControl.unbindKeyEvents();
 	      // const config = this.config;
 	      this.listenTo(this.mediaControl, _clappr2.default.Events.MEDIACONTROL_RENDERED, this.render);
 	      this.listenTo(this.mediaControl, _clappr2.default.Events.MEDIACONTROL_CONTAINERCHANGED, this.onContainerChanged);
@@ -416,10 +415,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	        },
 	        // playback control
 	        'playback-pauseresume': {
-	          keys: ['space'],
+	          keys: ['p'],
 	          events: {
 	            keypress: function keypress() {
-	              console.log('I was pressed', e);
 	              if (_this2.player.isPlaying()) {
 	                _this2.player.pause();
 	              } else {
@@ -429,13 +427,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	          }
 	        },
 	        'playback-switchrate': {
-	          keys: ['ctrl+shift+alt+1', 'ctrl+shift+alt+2', 'ctrl+shift+alt+3', 'ctrl+shift+alt+4', 'ctrl+shift+alt+5', 'ctrl+shift+alt+6', 'ctrl+shift+alt+7', '0', 'ctrl+shift+1', 'ctrl+shift+2', 'ctrl+shift+3', 'ctrl+shift+4', 'ctrl+shift+5', 'ctrl+shift+6', 'ctrl+shift+7'],
+	          keys: ['ctrl+shift+alt+2', 'ctrl+shift+alt+3', 'ctrl+shift+alt+4', 'ctrl+shift+alt+5', 'ctrl+shift+alt+6', 'ctrl+shift+alt+7', 'ctrl+shift+alt+8', 'ctrl+shift+1', 'ctrl+shift+2', 'ctrl+shift+3', 'ctrl+shift+4', 'ctrl+shift+5', 'ctrl+shift+6', 'ctrl+shift+7', 'ctrl+shift+8'],
 	          events: {
-	            keypress: function keypress(e) {
+	            keydown: function keydown(e) {
 	              var value = String.fromCharCode(e.keyCode);
 	              var sign = e.altKey ? -1 : 1;
-	              var rate = Number(value) * sign;
-	              // console.log(e, 'switched playback rate to', e.keyCode, value, rate);
+	              var rate = (Number(value) - 1) * sign;
+	              console.log(e, 'switched playback rate to', e.keyCode, value, rate);
 	              _this2.mediaControl.trigger('playbackRate', rate);
 	            }
 	          }

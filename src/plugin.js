@@ -72,10 +72,9 @@ class PlaybackControl extends Clappr.UICorePlugin {
       },
       // playback control
       'playback-pauseresume': {
-        keys: ['ctrl+space'],
+        keys: ['p'],
         events: {
           keypress: () => {
-            console.log('I was pressed', e);
             if (this.player.isPlaying()) {
               this.player.pause();
             } else {
@@ -86,27 +85,27 @@ class PlaybackControl extends Clappr.UICorePlugin {
       },
       'playback-switchrate': {
         keys: [
-          'ctrl+shift+alt+1',
           'ctrl+shift+alt+2',
           'ctrl+shift+alt+3',
           'ctrl+shift+alt+4',
           'ctrl+shift+alt+5',
           'ctrl+shift+alt+6',
           'ctrl+shift+alt+7',
-          '0',
+          'ctrl+shift+alt+8',
           'ctrl+shift+1',
           'ctrl+shift+2',
           'ctrl+shift+3',
           'ctrl+shift+4',
           'ctrl+shift+5',
           'ctrl+shift+6',
-          'ctrl+shift+7'
+          'ctrl+shift+7',
+          'ctrl+shift+8'
         ],
         events: {
-          keypress: (e) => {
+          keydown: (e) => {
             var value = String.fromCharCode(e.keyCode);
             var sign = e.altKey ? -1 : 1;
-            var rate = Number(value) * sign;
+            var rate = (Number(value) - 1) * sign;
             // console.log(e, 'switched playback rate to', e.keyCode, value, rate);
             this.mediaControl.trigger('playbackRate', rate);
           }
