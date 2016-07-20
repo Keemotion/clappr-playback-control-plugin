@@ -19,11 +19,30 @@ const SX_BUTTON_3 = '3';
 const SX_BUTTON_4 = '4';
 const SX_BUTTON_5 = '5';
 
+// mappings
 var buttonSecondsNavMap = {};
 buttonSecondsNavMap[SX_BUTTON_1] = -15;
 buttonSecondsNavMap[SX_BUTTON_2] = -5;
 buttonSecondsNavMap[SX_BUTTON_4] = +5;
 buttonSecondsNavMap[SX_BUTTON_5] = +15;
+
+const playbackRateMapping = {
+  '-7': -32.0,
+  '-6': -16.0,
+  '-5': -8.0,
+  '-4': -4.0,
+  '-3': -2.0,
+  '-2': -1.0,
+  '-1': -0.5,
+  '0': 0,
+  '1': 0.5,
+  '2': 1.0,
+  '3': 2.0,
+  '4': 4.0,
+  '5': 8.0,
+  '6': 16.0,
+  '7': 32.0
+};
 
 const defaults = {
   fps: 29
@@ -36,6 +55,7 @@ class PlaybackControl extends Clappr.UICorePlugin {
   get template() { return Clappr.template(PlaybackControlHTML); }
   get attributes() { return { class: 'playback-control' }; }
   get mediaControl() { return this.core.mediaControl; }
+  get playback() { return this.core.getCurrentPlayback(); }
   get player() { return this.mediaControl.container; }
   get config() { return this.core.options.playbackControlConfig || defaults; }
   get userInputActionsMap() {
@@ -134,13 +154,41 @@ class PlaybackControl extends Clappr.UICorePlugin {
           keydown: (e) => {
             var value = String.fromCharCode(e.keyCode);
             var sign = e.altKey ? -1 : 1;
-            var rate = (Number(value) - 1) * sign;
-            this.mediaControl.trigger('playbackRate', rate);
+            var key = (Number(value) - 1) * sign;
+            var rate = playbackRateMapping[key];
+            this.setManualPlaybackRate(rate);
           }
         }
       }
     };
     return actions;
+  }
+  setManualPlaybackRate(rate) {
+    // do nothing when current rate is equal to received
+    if (rate === this.manualPlaybackRate) {
+      return;
+    }
+    // clear previous virtual playhead
+    this.manualPlaybackRate = rate;
+    clearInterval(this.manualPlaybackId);
+    // edge case - 0 means stop motion
+    if (Number(rate) === 0) {
+      this.player.pause();
+      return;
+    }
+    //
+    const updateInterval = 0.1; // every 100 milliseconds
+    this.manualPlaybackId = setInterval(() => {
+      this.playback.trigger('seeking');
+      var destination = updateInterval * rate;
+      if (this.playback.bufferingState) {
+        console.warn('cannot seek - buffering, skip at twice the distance');
+        this.seekTime(2 * destination);
+      } else {
+        this.seekTime(destination);
+      }
+      this.playback.trigger('waiting');
+    }, updateInterval * 1000);
   }
   togglePlayback() {
     if (this.player.isPlaying()) {
@@ -207,6 +255,9 @@ class PlaybackControl extends Clappr.UICorePlugin {
       this.onMouseWheelDelegate.unbind();
       this.onMouseWheelDelegate = null;
     }
+    // remove virtual playback artifacts
+    this.manualPlaybackRate = 0;
+    clearInterval(this.manualPlaybackId);
   }
   render() {
     const style = Clappr.Styler.getStyleFor(PlaybackControlCSS);
@@ -284,8 +335,10 @@ class PlaybackControl extends Clappr.UICorePlugin {
       player.seek(position);
     }
   }
+  seekTime(time) {
+    return this.mediaControl.seekRelative(time);
+  }
   seekScaleValue(scale, value) {
-    console.debug('asked to seek scale', scale, value);
     switch (scale) {
     case SCALE_FRAMES:
       this.seekRelativeFrames(value);

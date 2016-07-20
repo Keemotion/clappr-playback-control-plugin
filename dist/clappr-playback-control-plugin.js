@@ -104,6 +104,37 @@ return /******/ (function(modules) { // webpackBootstrap
 	var BUTTON_STATE_DOWN = 'down';
 	var BUTTON_STATE_UP = 'up';
 	
+	var SX_BUTTON_1 = '1';
+	var SX_BUTTON_2 = '2';
+	var SX_BUTTON_3 = '3';
+	var SX_BUTTON_4 = '4';
+	var SX_BUTTON_5 = '5';
+	
+	// mappings
+	var buttonSecondsNavMap = {};
+	buttonSecondsNavMap[SX_BUTTON_1] = -15;
+	buttonSecondsNavMap[SX_BUTTON_2] = -5;
+	buttonSecondsNavMap[SX_BUTTON_4] = +5;
+	buttonSecondsNavMap[SX_BUTTON_5] = +15;
+	
+	var playbackRateMapping = {
+	  '-7': -32.0,
+	  '-6': -16.0,
+	  '-5': -8.0,
+	  '-4': -4.0,
+	  '-3': -2.0,
+	  '-2': -1.0,
+	  '-1': -0.5,
+	  '0': 0,
+	  '1': 0.5,
+	  '2': 1.0,
+	  '3': 2.0,
+	  '4': 4.0,
+	  '5': 8.0,
+	  '6': 16.0,
+	  '7': 32.0
+	};
+	
 	var defaults = {
 	  fps: 29
 	};
@@ -118,25 +149,51 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }
 	
 	  _createClass(PlaybackControl, [{
-	    key: 'onContainerChanged',
+	    key: 'setManualPlaybackRate',
+	    value: function setManualPlaybackRate(rate) {
+	      var _this2 = this;
 	
-	    // methods
-	    value: function onContainerChanged() {
-	      this.invalidate();
+	      // do nothing when current rate is equal to received
+	      if (rate === this.manualPlaybackRate) {
+	        return;
+	      }
+	      // clear previous virtual playhead
+	      this.manualPlaybackRate = rate;
+	      clearInterval(this.manualPlaybackId);
+	      // edge case - 0 means stop motion
+	      if (Number(rate) === 0) {
+	        this.player.pause();
+	        return;
+	      }
+	      //
+	      var updateInterval = 0.1; // every 100 milliseconds
+	      this.manualPlaybackId = setInterval(function () {
+	        _this2.playback.trigger('seeking');
+	        var destination = updateInterval * rate;
+	        if (_this2.playback.bufferingState) {
+	          console.warn('cannot seek - buffering, skip at twice the distance');
+	          _this2.seekTime(2 * destination);
+	        } else {
+	          _this2.seekTime(destination);
+	        }
+	        _this2.playback.trigger('waiting');
+	      }, updateInterval * 1000);
 	    }
 	  }, {
-	    key: 'seekScaleValue',
-	    value: function seekScaleValue(scale, value) {
-	      switch (scale) {
-	        case SCALE_FRAMES:
-	          this.seekRelativeFrames(value);
-	          break;
-	        case SCALE_SECONDS:
-	          this.seekRelativeSeconds(value);
-	          break;
-	        default:
-	          break;
+	    key: 'togglePlayback',
+	    value: function togglePlayback() {
+	      if (this.player.isPlaying()) {
+	        this.player.pause();
+	      } else {
+	        this.player.play();
 	      }
+	    }
+	    // methods
+	
+	  }, {
+	    key: 'onContainerChanged',
+	    value: function onContainerChanged() {
+	      this.invalidate();
 	    }
 	  }, {
 	    key: 'findButton',
@@ -250,6 +307,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	        this.onMouseWheelDelegate.unbind();
 	        this.onMouseWheelDelegate = null;
 	      }
+	      // remove virtual playback artifacts
+	      this.manualPlaybackRate = 0;
+	      clearInterval(this.manualPlaybackId);
 	    }
 	  }, {
 	    key: 'render',
@@ -318,7 +378,30 @@ return /******/ (function(modules) { // webpackBootstrap
 	      } else if (position > player.getDuration()) {
 	        position = player.getDuration();
 	      }
-	      player.seek(position);
+	      if (position === null || isNaN(position)) {
+	        console.error('Invalid seek position');
+	      } else {
+	        player.seek(position);
+	      }
+	    }
+	  }, {
+	    key: 'seekTime',
+	    value: function seekTime(time) {
+	      return this.mediaControl.seekRelative(time);
+	    }
+	  }, {
+	    key: 'seekScaleValue',
+	    value: function seekScaleValue(scale, value) {
+	      switch (scale) {
+	        case SCALE_FRAMES:
+	          this.seekRelativeFrames(value);
+	          break;
+	        case SCALE_SECONDS:
+	          this.seekRelativeSeconds(value);
+	          break;
+	        default:
+	          break;
+	      }
 	    }
 	  }, {
 	    key: 'name',
@@ -348,6 +431,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	      return this.core.mediaControl;
 	    }
 	  }, {
+	    key: 'playback',
+	    get: function get() {
+	      return this.core.getCurrentPlayback();
+	    }
+	  }, {
 	    key: 'player',
 	    get: function get() {
 	      return this.mediaControl.container;
@@ -360,44 +448,19 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }, {
 	    key: 'userInputActionsMap',
 	    get: function get() {
-	      var _this2 = this;
+	      var _this3 = this;
 	
 	      var actions = {
 	        // frame navigation
-	        'nav-second-dec': {
-	          keys: ['down'],
-	          events: {
-	            keydown: function keydown() {
-	              return _this2.highlightButton(SCALE_SECONDS, -1, BUTTON_STATE_DOWN);
-	            },
-	            keyup: function keyup() {
-	              _this2.highlightButton(SCALE_SECONDS, -1, BUTTON_STATE_UP);
-	              _this2.seekRelativeSeconds(-1);
-	            }
-	          }
-	        },
-	        'nav-second-inc': {
-	          keys: ['up'],
-	          events: {
-	            keydown: function keydown() {
-	              return _this2.highlightButton(SCALE_SECONDS, +1, BUTTON_STATE_DOWN);
-	            },
-	            keyup: function keyup() {
-	              _this2.highlightButton(SCALE_SECONDS, +1, BUTTON_STATE_UP);
-	              _this2.seekRelativeSeconds(+1);
-	            }
-	          }
-	        },
-	        // time(second) nagiation
 	        'nav-frame-dec': {
 	          keys: ['left'],
 	          events: {
 	            keydown: function keydown() {
-	              return _this2.highlightButton(SCALE_FRAMES, -1, BUTTON_STATE_DOWN);
+	              return _this3.highlightButton(SCALE_FRAMES, -1, BUTTON_STATE_DOWN);
 	            },
 	            keyup: function keyup() {
-	              _this2.highlightButton(SCALE_FRAMES, -1, BUTTON_STATE_UP);
-	              _this2.seekRelativeFrames(-1);
+	              _this3.highlightButton(SCALE_FRAMES, -1, BUTTON_STATE_UP);
+	              _this3.seekScaleValue(SCALE_FRAMES, -1);
 	            }
 	          }
 	        },
@@ -405,11 +468,53 @@ return /******/ (function(modules) { // webpackBootstrap
 	          keys: ['right'],
 	          events: {
 	            keydown: function keydown() {
-	              return _this2.highlightButton(SCALE_FRAMES, +1, BUTTON_STATE_DOWN);
+	              return _this3.highlightButton(SCALE_FRAMES, +1, BUTTON_STATE_DOWN);
 	            },
 	            keyup: function keyup() {
-	              _this2.highlightButton(SCALE_FRAMES, +1, BUTTON_STATE_UP);
-	              _this2.seekRelativeFrames(+1);
+	              _this3.highlightButton(SCALE_FRAMES, +1, BUTTON_STATE_UP);
+	              _this3.seekScaleValue(SCALE_FRAMES, +1);
+	            }
+	          }
+	        },
+	        // time(second) nagiation
+	        'nav-second-dec': {
+	          keys: ['down'],
+	          events: {
+	            keydown: function keydown() {
+	              return _this3.highlightButton(SCALE_SECONDS, -1, BUTTON_STATE_DOWN);
+	            },
+	            keyup: function keyup() {
+	              _this3.highlightButton(SCALE_SECONDS, -1, BUTTON_STATE_UP);
+	              _this3.seekScaleValue(SCALE_SECONDS, -1);
+	            }
+	          }
+	        },
+	        'nav-second-inc': {
+	          keys: ['up'],
+	          events: {
+	            keydown: function keydown() {
+	              return _this3.highlightButton(SCALE_SECONDS, +1, BUTTON_STATE_DOWN);
+	            },
+	            keyup: function keyup() {
+	              _this3.highlightButton(SCALE_SECONDS, +1, BUTTON_STATE_UP);
+	              _this3.seekScaleValue(SCALE_SECONDS, +1);
+	            }
+	          }
+	        },
+	        // second based navigation jumps
+	        'nav-second-jmp': {
+	          keys: ['alt+shift+1', 'alt+shift+2', 'alt+shift+3', 'alt+shift+4', 'alt+shift+5'],
+	          events: {
+	            keydown: function keydown(e) {
+	              var commandKey = String.fromCharCode(e.keyCode);
+	              if (commandKey === SX_BUTTON_3) {
+	                // pause/resume
+	                _this3.togglePlayback();
+	              } else {
+	                // jump seconds
+	                var delta = buttonSecondsNavMap[commandKey];
+	                _this3.seekScaleValue(SCALE_SECONDS, delta);
+	              }
 	            }
 	          }
 	        },
@@ -418,23 +523,20 @@ return /******/ (function(modules) { // webpackBootstrap
 	          keys: ['p'],
 	          events: {
 	            keypress: function keypress() {
-	              if (_this2.player.isPlaying()) {
-	                _this2.player.pause();
-	              } else {
-	                _this2.player.play();
-	              }
+	              return _this3.togglePlayback;
 	            }
 	          }
 	        },
 	        'playback-switchrate': {
-	          keys: ['ctrl+shift+alt+2', 'ctrl+shift+alt+3', 'ctrl+shift+alt+4', 'ctrl+shift+alt+5', 'ctrl+shift+alt+6', 'ctrl+shift+alt+7', 'ctrl+shift+alt+8', 'ctrl+shift+1', 'ctrl+shift+2', 'ctrl+shift+3', 'ctrl+shift+4', 'ctrl+shift+5', 'ctrl+shift+6', 'ctrl+shift+7', 'ctrl+shift+8'],
+	          keys: ['ctrl+shift+alt+2', 'ctrl+shift+alt+3', 'ctrl+shift+alt+4', 'ctrl+shift+alt+5', 'ctrl+shift+alt+6', 'ctrl+shift+alt+7', 'ctrl+shift+alt+8', 'ctrl+shift+1', // reset to pause
+	          'ctrl+shift+2', 'ctrl+shift+3', 'ctrl+shift+4', 'ctrl+shift+5', 'ctrl+shift+6', 'ctrl+shift+7', 'ctrl+shift+8'],
 	          events: {
 	            keydown: function keydown(e) {
 	              var value = String.fromCharCode(e.keyCode);
 	              var sign = e.altKey ? -1 : 1;
-	              var rate = (Number(value) - 1) * sign;
-	              console.log(e, 'switched playback rate to', e.keyCode, value, rate);
-	              _this2.mediaControl.trigger('playbackRate', rate);
+	              var key = (Number(value) - 1) * sign;
+	              var rate = playbackRateMapping[key];
+	              _this3.setManualPlaybackRate(rate);
 	            }
 	          }
 	        }
@@ -531,7 +633,7 @@ return /******/ (function(modules) { // webpackBootstrap
   \***********************/
 /***/ function(module, exports) {
 
-	module.exports = "<div class=\"playback-control-actions\" data-step-scale=\"seconds\">\n  <button type=\"button\" data-step-value=\"-1\" data-step-scale=\"seconds\" title=\"Step 1 second backward\">\n    <p>-1</p>\n    <sub>&darr;</sub>\n  </button>\n  <button type=\"button\" data-step-value=\"+1\" data-step-scale=\"seconds\" title=\"Step 1 second forward\">\n    <p>+1</p>\n    <sub>&uarr;</sub>\n  </button>\n</div>\n<div class=\"playback-control-actions\" data-step-scale=\"frames\">\n  <button type=\"button\" data-step-value=\"-1\" data-step-scale=\"frames\" title=\"Step 1 frame backward\">\n    <p>-1</p>\n    <sub>&larr;</sub>\n  </button>\n  <button type=\"button\" data-step-value=\"+1\" data-step-scale=\"frames\" title=\"Step 1 frame forward\">\n    <p>+1</p>\n    <sub>&rarr;</sub>\n  </button>\n</div>\n";
+	module.exports = "<div class=\"playback-control-actions\" data-step-scale=\"frames\">\n  <button type=\"button\" data-step-value=\"-1\" data-step-scale=\"frames\" title=\"Step 1 frame backward\">\n    <p>-1</p>\n    <sub>&larr;</sub>\n  </button>\n  <button type=\"button\" data-step-value=\"+1\" data-step-scale=\"frames\" title=\"Step 1 frame forward\">\n    <p>+1</p>\n    <sub>&rarr;</sub>\n  </button>\n</div>\n<div class=\"playback-control-actions\" data-step-scale=\"seconds\">\n  <button type=\"button\" data-step-value=\"-1\" data-step-scale=\"seconds\" title=\"Step 1 second backward\">\n    <p>-1</p>\n    <sub>&darr;</sub>\n  </button>\n  <button type=\"button\" data-step-value=\"+1\" data-step-scale=\"seconds\" title=\"Step 1 second forward\">\n    <p>+1</p>\n    <sub>&uarr;</sub>\n  </button>\n</div>\n";
 
 /***/ },
 /* 4 */
