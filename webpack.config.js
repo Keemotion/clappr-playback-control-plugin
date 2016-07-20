@@ -50,15 +50,15 @@ module.exports = {
   devtool: devtool,
   plugins: pluginsList,
   externals: {
-    "clappr": "clappr",
-    "clappr-zepto": "clappr-zepto"
+    'clappr': 'Clappr',
+    'clappr-zepto': 'clappr-zepto'
   },
   module: {
     loaders: [
       {
         test: /\.js$/,
         exclude: /(node_modules|bower_components)/,
-        loader: 'babel-loader',
+        loader: 'babel',
         query: {
           compact: isProduction,
         }

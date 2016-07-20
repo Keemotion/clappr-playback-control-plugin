@@ -1,12 +1,12 @@
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
-		module.exports = factory(require("clappr"));
+		module.exports = factory(require("Clappr"));
 	else if(typeof define === 'function' && define.amd)
-		define(["clappr"], factory);
+		define(["Clappr"], factory);
 	else if(typeof exports === 'object')
-		exports["PlaybackControlPlugin"] = factory(require("clappr"));
+		exports["PlaybackControlPlugin"] = factory(require("Clappr"));
 	else
-		root["PlaybackControlPlugin"] = factory(root["clappr"]);
+		root["PlaybackControlPlugin"] = factory(root["Clappr"]);
 })(this, function(__WEBPACK_EXTERNAL_MODULE_5__) {
 return /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
@@ -63,6 +63,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	  value: true
 	});
 	
+	var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
+	
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 	
 	var _get = function get(object, property, receiver) { if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { return get(parent, property, receiver); } } else if ("value" in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } };
@@ -102,7 +104,40 @@ return /******/ (function(modules) { // webpackBootstrap
 	var BUTTON_STATE_DOWN = 'down';
 	var BUTTON_STATE_UP = 'up';
 	
-	var FPS_DEFAULT = 29;
+	var SX_BUTTON_1 = '1';
+	var SX_BUTTON_2 = '2';
+	var SX_BUTTON_3 = '3';
+	var SX_BUTTON_4 = '4';
+	var SX_BUTTON_5 = '5';
+	
+	// mappings
+	var buttonSecondsNavMap = {};
+	buttonSecondsNavMap[SX_BUTTON_1] = -15;
+	buttonSecondsNavMap[SX_BUTTON_2] = -5;
+	buttonSecondsNavMap[SX_BUTTON_4] = +5;
+	buttonSecondsNavMap[SX_BUTTON_5] = +15;
+	
+	var playbackRateMapping = {
+	  '-7': -32.0,
+	  '-6': -16.0,
+	  '-5': -8.0,
+	  '-4': -4.0,
+	  '-3': -2.0,
+	  '-2': -1.0,
+	  '-1': -0.5,
+	  '0': 0,
+	  '1': 0.5,
+	  '2': 1.0,
+	  '3': 2.0,
+	  '4': 4.0,
+	  '5': 8.0,
+	  '6': 16.0,
+	  '7': 32.0
+	};
+	
+	var defaults = {
+	  fps: 29
+	};
 	
 	var PlaybackControl = function (_Clappr$UICorePlugin) {
 	  _inherits(PlaybackControl, _Clappr$UICorePlugin);
@@ -114,25 +149,51 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }
 	
 	  _createClass(PlaybackControl, [{
-	    key: 'onContainerChanged',
+	    key: 'setManualPlaybackRate',
+	    value: function setManualPlaybackRate(rate) {
+	      var _this2 = this;
 	
-	    // methods
-	    value: function onContainerChanged() {
-	      this.invalidate();
+	      // do nothing when current rate is equal to received
+	      if (rate === this.manualPlaybackRate) {
+	        return;
+	      }
+	      // clear previous virtual playhead
+	      this.manualPlaybackRate = rate;
+	      clearInterval(this.manualPlaybackId);
+	      // edge case - 0 means stop motion
+	      if (Number(rate) === 0) {
+	        this.player.pause();
+	        return;
+	      }
+	      //
+	      var updateInterval = 0.1; // every 100 milliseconds
+	      this.manualPlaybackId = setInterval(function () {
+	        _this2.playback.trigger('seeking');
+	        var destination = updateInterval * rate;
+	        if (_this2.playback.bufferingState) {
+	          console.warn('cannot seek - buffering, skip at twice the distance');
+	          _this2.seekTime(2 * destination);
+	        } else {
+	          _this2.seekTime(destination);
+	        }
+	        _this2.playback.trigger('waiting');
+	      }, updateInterval * 1000);
 	    }
 	  }, {
-	    key: 'seekScaleValue',
-	    value: function seekScaleValue(scale, value) {
-	      switch (scale) {
-	        case SCALE_FRAMES:
-	          this.seekRelativeFrames(value);
-	          break;
-	        case SCALE_SECONDS:
-	          this.seekRelativeSeconds(value);
-	          break;
-	        default:
-	          break;
+	    key: 'togglePlayback',
+	    value: function togglePlayback() {
+	      if (this.player.isPlaying()) {
+	        this.player.pause();
+	      } else {
+	        this.player.play();
 	      }
+	    }
+	    // methods
+	
+	  }, {
+	    key: 'onContainerChanged',
+	    value: function onContainerChanged() {
+	      this.invalidate();
 	    }
 	  }, {
 	    key: 'findButton',
@@ -179,112 +240,63 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }, {
 	    key: 'bindEvents',
 	    value: function bindEvents() {
-	      var _this2 = this;
-	
+	      // discard default clappr events
 	      // const config = this.config;
-	      var player = this.player;
 	      this.listenTo(this.mediaControl, _clappr2.default.Events.MEDIACONTROL_RENDERED, this.render);
 	      this.listenTo(this.mediaControl, _clappr2.default.Events.MEDIACONTROL_CONTAINERCHANGED, this.onContainerChanged);
 	      // non-clappr events
-	      _mousetrap2.default.addKeycodes({ 144: 'numlock' });
-	      // standard keyboard shortcuts
-	      _mousetrap2.default.bind('q', function () {
-	        return _this2.highlightButton(SCALE_SECONDS, -1, BUTTON_STATE_DOWN);
-	      }, 'keydown');
-	      _mousetrap2.default.bind('q', function () {
-	        _this2.highlightButton(SCALE_SECONDS, -1, BUTTON_STATE_UP);
-	        _this2.seekRelativeSeconds(-1);
-	      }, 'keyup');
-	      _mousetrap2.default.bind('w', function () {
-	        return _this2.highlightButton(SCALE_SECONDS, +1, BUTTON_STATE_DOWN);
-	      }, 'keydown');
-	      _mousetrap2.default.bind('w', function () {
-	        _this2.highlightButton(SCALE_SECONDS, +1, BUTTON_STATE_UP);
-	        _this2.seekRelativeSeconds(+1);
-	      }, 'keyup');
-	      _mousetrap2.default.bind('a', function () {
-	        return _this2.highlightButton(SCALE_FRAMES, -1, BUTTON_STATE_DOWN);
-	      }, 'keydown');
-	      _mousetrap2.default.bind('a', function () {
-	        _this2.highlightButton(SCALE_FRAMES, -1, BUTTON_STATE_UP);
-	        _this2.seekRelativeFrames(-1);
-	      }, 'keyup');
-	      _mousetrap2.default.bind('s', function () {
-	        return _this2.highlightButton(SCALE_FRAMES, +1, BUTTON_STATE_DOWN);
-	      }, 'keydown');
-	      _mousetrap2.default.bind('s', function () {
-	        _this2.highlightButton(SCALE_FRAMES, +1, BUTTON_STATE_UP);
-	        _this2.seekRelativeFrames(+1);
-	      }, 'keyup');
-	      _mousetrap2.default.bind('space', function () {
-	        if (player.isPlaying()) {
-	          player.pause();
-	        } else {
-	          player.play();
+	      _mousetrap2.default.reset();
+	      var _iteratorNormalCompletion = true;
+	      var _didIteratorError = false;
+	      var _iteratorError = undefined;
+	
+	      try {
+	        for (var _iterator = Object.entries(this.userInputActionsMap)[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+	          var _step$value = _slicedToArray(_step.value, 2);
+	
+	          var userAction = _step$value[1];
+	          var _iteratorNormalCompletion2 = true;
+	          var _didIteratorError2 = false;
+	          var _iteratorError2 = undefined;
+	
+	          try {
+	            for (var _iterator2 = Object.entries(userAction.events)[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+	              var _step2$value = _slicedToArray(_step2.value, 2);
+	
+	              var event = _step2$value[0];
+	              var callback = _step2$value[1];
+	
+	              _mousetrap2.default.bind(userAction.keys, callback, event);
+	            }
+	          } catch (err) {
+	            _didIteratorError2 = true;
+	            _iteratorError2 = err;
+	          } finally {
+	            try {
+	              if (!_iteratorNormalCompletion2 && _iterator2.return) {
+	                _iterator2.return();
+	              }
+	            } finally {
+	              if (_didIteratorError2) {
+	                throw _iteratorError2;
+	              }
+	            }
+	          }
 	        }
-	      });
-	      // shuttle xpress - large wheel with arrow keys fallback(time control)
-	      _mousetrap2.default.bind('up', function () {
-	        return _this2.seekRelativeSeconds(-1);
-	      });
-	      _mousetrap2.default.bind('down', function () {
-	        return _this2.seekRelativeSeconds(+1);
-	      });
-	      // shuttle xpress - small wheel with arrow keys fallback(time control)
-	      _mousetrap2.default.bind('left', function () {
-	        return _this2.seekRelativeFrames(-1);
-	      });
-	      _mousetrap2.default.bind('right', function () {
-	        return _this2.seekRelativeFrames(+1);
-	      });
-	      // shuttle xpress - small wheel with ctrl +/- keys combo fallback(frame control)
-	      _mousetrap2.default.bind('ctrl+-', function (e) {
-	        e.preventDefault();
-	        e.stopPropagation();
-	        _this2.seekRelativeFrames(-1);
-	      });
-	      _mousetrap2.default.bind(['ctrl+=', 'ctrl+plus'], function (e) {
-	        e.preventDefault();
-	        e.stopPropagation();
-	        _this2.seekRelativeFrames(+1);
-	      });
-	      // shuttle express - buttons(numeric keys fallback)
-	      var switchPlaybackRate = function switchPlaybackRate(e, rate) {
-	        e.preventDefault();
-	        e.stopPropagation();
-	        _this2.mediaControl.trigger('playbackRate', rate);
-	        return false;
-	      };
-	      _mousetrap2.default.bind('0', function (e) {
-	        return switchPlaybackRate(e, 0.5);
-	      });
-	      _mousetrap2.default.bind(['1', 'numlock+alt+left'], function (e) {
-	        return switchPlaybackRate(e, 1);
-	      });
-	      _mousetrap2.default.bind(['2', 'numlock+ctrl+h'], function (e) {
-	        return switchPlaybackRate(e, 2);
-	      });
-	      _mousetrap2.default.bind(['3', 'ctrl+shift+o', 'numlock+ctrl+i'], function (e) {
-	        return switchPlaybackRate(e, 3);
-	      });
-	      _mousetrap2.default.bind(['4', 'numlock+ctrl+t'], function (e) {
-	        return switchPlaybackRate(e, 4);
-	      });
-	      _mousetrap2.default.bind(['5', 'numlock+alt+right'], function (e) {
-	        return switchPlaybackRate(e, 5);
-	      });
-	      _mousetrap2.default.bind('6', function (e) {
-	        return switchPlaybackRate(e, 6);
-	      });
-	      _mousetrap2.default.bind('7', function (e) {
-	        return switchPlaybackRate(e, 7);
-	      });
-	      _mousetrap2.default.bind('8', function (e) {
-	        return switchPlaybackRate(e, 8);
-	      });
-	      _mousetrap2.default.bind('9', function (e) {
-	        return switchPlaybackRate(e, 9);
-	      });
+	      } catch (err) {
+	        _didIteratorError = true;
+	        _iteratorError = err;
+	      } finally {
+	        try {
+	          if (!_iteratorNormalCompletion && _iterator.return) {
+	            _iterator.return();
+	          }
+	        } finally {
+	          if (_didIteratorError) {
+	            throw _iteratorError;
+	          }
+	        }
+	      }
 	    }
 	  }, {
 	    key: 'stopListening',
@@ -295,6 +307,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	        this.onMouseWheelDelegate.unbind();
 	        this.onMouseWheelDelegate = null;
 	      }
+	      // remove virtual playback artifacts
+	      this.manualPlaybackRate = 0;
+	      clearInterval(this.manualPlaybackId);
 	    }
 	  }, {
 	    key: 'render',
@@ -316,7 +331,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }, {
 	    key: 'getFPS',
 	    value: function getFPS() {
-	      var fps = FPS_DEFAULT;
+	      var fps = defaults.fps;
 	      if (this.player && this.player.options && this.player.options.playbackControl) {
 	        fps = this.player.options.playbackControl.fps || fps;
 	      }
@@ -363,7 +378,30 @@ return /******/ (function(modules) { // webpackBootstrap
 	      } else if (position > player.getDuration()) {
 	        position = player.getDuration();
 	      }
-	      player.seek(position);
+	      if (position === null || isNaN(position)) {
+	        console.error('Invalid seek position');
+	      } else {
+	        player.seek(position);
+	      }
+	    }
+	  }, {
+	    key: 'seekTime',
+	    value: function seekTime(time) {
+	      return this.mediaControl.seekRelative(time);
+	    }
+	  }, {
+	    key: 'seekScaleValue',
+	    value: function seekScaleValue(scale, value) {
+	      switch (scale) {
+	        case SCALE_FRAMES:
+	          this.seekRelativeFrames(value);
+	          break;
+	        case SCALE_SECONDS:
+	          this.seekRelativeSeconds(value);
+	          break;
+	        default:
+	          break;
+	      }
 	    }
 	  }, {
 	    key: 'name',
@@ -393,6 +431,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	      return this.core.mediaControl;
 	    }
 	  }, {
+	    key: 'playback',
+	    get: function get() {
+	      return this.core.getCurrentPlayback();
+	    }
+	  }, {
 	    key: 'player',
 	    get: function get() {
 	      return this.mediaControl.container;
@@ -400,7 +443,105 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }, {
 	    key: 'config',
 	    get: function get() {
-	      return this.core.options.playbackControlConfig || { keyBindings: [] };
+	      return this.core.options.playbackControlConfig || defaults;
+	    }
+	  }, {
+	    key: 'userInputActionsMap',
+	    get: function get() {
+	      var _this3 = this;
+	
+	      var actions = {
+	        // frame navigation
+	        'nav-frame-dec': {
+	          keys: ['left'],
+	          events: {
+	            keydown: function keydown() {
+	              return _this3.highlightButton(SCALE_FRAMES, -1, BUTTON_STATE_DOWN);
+	            },
+	            keyup: function keyup() {
+	              _this3.highlightButton(SCALE_FRAMES, -1, BUTTON_STATE_UP);
+	              _this3.seekScaleValue(SCALE_FRAMES, -1);
+	            }
+	          }
+	        },
+	        'nav-frame-inc': {
+	          keys: ['right'],
+	          events: {
+	            keydown: function keydown() {
+	              return _this3.highlightButton(SCALE_FRAMES, +1, BUTTON_STATE_DOWN);
+	            },
+	            keyup: function keyup() {
+	              _this3.highlightButton(SCALE_FRAMES, +1, BUTTON_STATE_UP);
+	              _this3.seekScaleValue(SCALE_FRAMES, +1);
+	            }
+	          }
+	        },
+	        // time(second) nagiation
+	        'nav-second-dec': {
+	          keys: ['down'],
+	          events: {
+	            keydown: function keydown() {
+	              return _this3.highlightButton(SCALE_SECONDS, -1, BUTTON_STATE_DOWN);
+	            },
+	            keyup: function keyup() {
+	              _this3.highlightButton(SCALE_SECONDS, -1, BUTTON_STATE_UP);
+	              _this3.seekScaleValue(SCALE_SECONDS, -1);
+	            }
+	          }
+	        },
+	        'nav-second-inc': {
+	          keys: ['up'],
+	          events: {
+	            keydown: function keydown() {
+	              return _this3.highlightButton(SCALE_SECONDS, +1, BUTTON_STATE_DOWN);
+	            },
+	            keyup: function keyup() {
+	              _this3.highlightButton(SCALE_SECONDS, +1, BUTTON_STATE_UP);
+	              _this3.seekScaleValue(SCALE_SECONDS, +1);
+	            }
+	          }
+	        },
+	        // second based navigation jumps
+	        'nav-second-jmp': {
+	          keys: ['alt+shift+1', 'alt+shift+2', 'alt+shift+3', 'alt+shift+4', 'alt+shift+5'],
+	          events: {
+	            keydown: function keydown(e) {
+	              var commandKey = String.fromCharCode(e.keyCode);
+	              if (commandKey === SX_BUTTON_3) {
+	                // pause/resume
+	                _this3.togglePlayback();
+	              } else {
+	                // jump seconds
+	                var delta = buttonSecondsNavMap[commandKey];
+	                _this3.seekScaleValue(SCALE_SECONDS, delta);
+	              }
+	            }
+	          }
+	        },
+	        // playback control
+	        'playback-pauseresume': {
+	          keys: ['p'],
+	          events: {
+	            keypress: function keypress() {
+	              return _this3.togglePlayback;
+	            }
+	          }
+	        },
+	        'playback-switchrate': {
+	          keys: ['ctrl+shift+alt+2', 'ctrl+shift+alt+3', 'ctrl+shift+alt+4', 'ctrl+shift+alt+5', 'ctrl+shift+alt+6', 'ctrl+shift+alt+7', 'ctrl+shift+alt+8', 'ctrl+shift+1', // reset to pause
+	          'ctrl+shift+2', 'ctrl+shift+3', 'ctrl+shift+4', 'ctrl+shift+5', 'ctrl+shift+6', 'ctrl+shift+7', 'ctrl+shift+8'],
+	          events: {
+	            keydown: function keydown(e) {
+	              var value = String.fromCharCode(e.keyCode);
+	              var sign = e.altKey ? -1 : 1;
+	              var key = (Number(value) - 1) * sign;
+	              var rate = playbackRateMapping[key];
+	              _this3.setManualPlaybackRate(rate);
+	            }
+	          }
+	        }
+	      };
+	      return actions;
 	    }
 	  }]);
 	
@@ -492,7 +633,7 @@ return /******/ (function(modules) { // webpackBootstrap
   \***********************/
 /***/ function(module, exports) {
 
-	module.exports = "<div class=\"playback-control-actions\" data-step-scale=\"seconds\">\n  <button type=\"button\" data-step-value=\"-1\" data-step-scale=\"seconds\" title=\"Step 1 second backward\">\n    <p>-1</p>\n    <sub>Q</sub>\n  </button>\n  <button type=\"button\" data-step-value=\"+1\" data-step-scale=\"seconds\" title=\"Step 1 second forward\">\n    <p>+1</p>\n    <sub>W</sub>\n  </button>\n</div>\n<div class=\"playback-control-actions\" data-step-scale=\"frames\">\n  <button type=\"button\" data-step-value=\"-1\" data-step-scale=\"frames\" title=\"Step 1 frame backward\">\n    <p>-1</p>\n    <sub>A</sub>\n  </button>\n  <button type=\"button\" data-step-value=\"+1\" data-step-scale=\"frames\" title=\"Step 1 frame forward\">\n    <p>+1</p>\n    <sub>S</sub>\n  </button>\n</div>\n";
+	module.exports = "<div class=\"playback-control-actions\" data-step-scale=\"frames\">\n  <button type=\"button\" data-step-value=\"-1\" data-step-scale=\"frames\" title=\"Step 1 frame backward\">\n    <p>-1</p>\n    <sub>&larr;</sub>\n  </button>\n  <button type=\"button\" data-step-value=\"+1\" data-step-scale=\"frames\" title=\"Step 1 frame forward\">\n    <p>+1</p>\n    <sub>&rarr;</sub>\n  </button>\n</div>\n<div class=\"playback-control-actions\" data-step-scale=\"seconds\">\n  <button type=\"button\" data-step-value=\"-1\" data-step-scale=\"seconds\" title=\"Step 1 second backward\">\n    <p>-1</p>\n    <sub>&darr;</sub>\n  </button>\n  <button type=\"button\" data-step-value=\"+1\" data-step-scale=\"seconds\" title=\"Step 1 second forward\">\n    <p>+1</p>\n    <sub>&uarr;</sub>\n  </button>\n</div>\n";
 
 /***/ },
 /* 4 */
@@ -1544,7 +1685,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ },
 /* 5 */
 /*!*************************!*\
-  !*** external "clappr" ***!
+  !*** external "Clappr" ***!
   \*************************/
 /***/ function(module, exports) {
 

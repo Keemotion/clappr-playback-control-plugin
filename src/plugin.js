@@ -2,7 +2,7 @@
 // node
 // vendors
 import Clappr from 'clappr';
-import MouseTrap from 'mousetrap';
+import Mousetrap from 'mousetrap';
 // project
 import PlaybackControlHTML from './view.html';
 import PlaybackControlCSS from './style.scss';
@@ -13,7 +13,40 @@ const SCALE_SECONDS = 'seconds';
 const BUTTON_STATE_DOWN = 'down';
 const BUTTON_STATE_UP = 'up';
 
-const FPS_DEFAULT = 29;
+const SX_BUTTON_1 = '1';
+const SX_BUTTON_2 = '2';
+const SX_BUTTON_3 = '3';
+const SX_BUTTON_4 = '4';
+const SX_BUTTON_5 = '5';
+
+// mappings
+var buttonSecondsNavMap = {};
+buttonSecondsNavMap[SX_BUTTON_1] = -15;
+buttonSecondsNavMap[SX_BUTTON_2] = -5;
+buttonSecondsNavMap[SX_BUTTON_4] = +5;
+buttonSecondsNavMap[SX_BUTTON_5] = +15;
+
+const playbackRateMapping = {
+  '-7': -32.0,
+  '-6': -16.0,
+  '-5': -8.0,
+  '-4': -4.0,
+  '-3': -2.0,
+  '-2': -1.0,
+  '-1': -0.5,
+  '0': 0,
+  '1': 0.5,
+  '2': 1.0,
+  '3': 2.0,
+  '4': 4.0,
+  '5': 8.0,
+  '6': 16.0,
+  '7': 32.0
+};
+
+const defaults = {
+  fps: 29
+};
 
 class PlaybackControl extends Clappr.UICorePlugin {
   // properties
@@ -22,23 +55,151 @@ class PlaybackControl extends Clappr.UICorePlugin {
   get template() { return Clappr.template(PlaybackControlHTML); }
   get attributes() { return { class: 'playback-control' }; }
   get mediaControl() { return this.core.mediaControl; }
+  get playback() { return this.core.getCurrentPlayback(); }
   get player() { return this.mediaControl.container; }
-  get config() { return this.core.options.playbackControlConfig || { keyBindings: [] }; }
+  get config() { return this.core.options.playbackControlConfig || defaults; }
+  get userInputActionsMap() {
+    const actions = {
+      // frame navigation
+      'nav-frame-dec': {
+        keys: ['left'],
+        events: {
+          keydown: () => this.highlightButton(SCALE_FRAMES, -1, BUTTON_STATE_DOWN),
+          keyup: () => {
+            this.highlightButton(SCALE_FRAMES, -1, BUTTON_STATE_UP);
+            this.seekScaleValue(SCALE_FRAMES, -1);
+          }
+        }
+      },
+      'nav-frame-inc': {
+        keys: ['right'],
+        events: {
+          keydown: () => this.highlightButton(SCALE_FRAMES, +1, BUTTON_STATE_DOWN),
+          keyup: () => {
+            this.highlightButton(SCALE_FRAMES, +1, BUTTON_STATE_UP);
+            this.seekScaleValue(SCALE_FRAMES, +1);
+          }
+        }
+      },
+      // time(second) nagiation
+      'nav-second-dec': {
+        keys: ['down'],
+        events: {
+          keydown: () => this.highlightButton(SCALE_SECONDS, -1, BUTTON_STATE_DOWN),
+          keyup: () => {
+            this.highlightButton(SCALE_SECONDS, -1, BUTTON_STATE_UP);
+            this.seekScaleValue(SCALE_SECONDS, -1);
+          }
+        }
+      },
+      'nav-second-inc': {
+        keys: ['up'],
+        events: {
+          keydown: () => this.highlightButton(SCALE_SECONDS, +1, BUTTON_STATE_DOWN),
+          keyup: () => {
+            this.highlightButton(SCALE_SECONDS, +1, BUTTON_STATE_UP);
+            this.seekScaleValue(SCALE_SECONDS, +1);
+          }
+        }
+      },
+      // second based navigation jumps
+      'nav-second-jmp': {
+        keys: [
+          'alt+shift+1',
+          'alt+shift+2',
+          'alt+shift+3',
+          'alt+shift+4',
+          'alt+shift+5'
+        ],
+        events: {
+          keydown: (e) => {
+            var commandKey = String.fromCharCode(e.keyCode);
+            if (commandKey === SX_BUTTON_3) {
+              // pause/resume
+              this.togglePlayback();
+            } else {
+              // jump seconds
+              var delta = buttonSecondsNavMap[commandKey];
+              this.seekScaleValue(SCALE_SECONDS, delta);
+            }
+          }
+        }
+      },
+      // playback control
+      'playback-pauseresume': {
+        keys: ['p'],
+        events: {
+          keypress: () => this.togglePlayback
+        }
+      },
+      'playback-switchrate': {
+        keys: [
+          'ctrl+shift+alt+2',
+          'ctrl+shift+alt+3',
+          'ctrl+shift+alt+4',
+          'ctrl+shift+alt+5',
+          'ctrl+shift+alt+6',
+          'ctrl+shift+alt+7',
+          'ctrl+shift+alt+8',
+          'ctrl+shift+1', // reset to pause
+          'ctrl+shift+2',
+          'ctrl+shift+3',
+          'ctrl+shift+4',
+          'ctrl+shift+5',
+          'ctrl+shift+6',
+          'ctrl+shift+7',
+          'ctrl+shift+8'
+        ],
+        events: {
+          keydown: (e) => {
+            var value = String.fromCharCode(e.keyCode);
+            var sign = e.altKey ? -1 : 1;
+            var key = (Number(value) - 1) * sign;
+            var rate = playbackRateMapping[key];
+            this.setManualPlaybackRate(rate);
+          }
+        }
+      }
+    };
+    return actions;
+  }
+  setManualPlaybackRate(rate) {
+    // do nothing when current rate is equal to received
+    if (rate === this.manualPlaybackRate) {
+      return;
+    }
+    // clear previous virtual playhead
+    this.manualPlaybackRate = rate;
+    clearInterval(this.manualPlaybackId);
+    // edge case - 0 means stop motion
+    if (Number(rate) === 0) {
+      this.player.pause();
+      return;
+    }
+    //
+    const updateInterval = 0.1; // every 100 milliseconds
+    this.manualPlaybackId = setInterval(() => {
+      this.playback.trigger('seeking');
+      var destination = updateInterval * rate;
+      if (this.playback.bufferingState) {
+        console.warn('cannot seek - buffering, skip at twice the distance');
+        this.seekTime(2 * destination);
+      } else {
+        this.seekTime(destination);
+      }
+      this.playback.trigger('waiting');
+    }, updateInterval * 1000);
+  }
+  togglePlayback() {
+    if (this.player.isPlaying()) {
+      this.player.pause();
+    } else {
+      this.player.play();
+    }
+  }
   // methods
   onContainerChanged() {
     this.invalidate();
-  }
-  seekScaleValue(scale, value) {
-    switch (scale) {
-    case SCALE_FRAMES:
-      this.seekRelativeFrames(value);
-      break;
-    case SCALE_SECONDS:
-      this.seekRelativeSeconds(value);
-      break;
-    default:
-      break;
-    }
   }
   findButton(scale, value) {
     const signed = value > 0 ? `+${value}` : value;
@@ -75,74 +236,17 @@ class PlaybackControl extends Clappr.UICorePlugin {
     return false;
   }
   bindEvents() {
+    // discard default clappr events
     // const config = this.config;
-    const player = this.player;
     this.listenTo(this.mediaControl, Clappr.Events.MEDIACONTROL_RENDERED, this.render);
     this.listenTo(this.mediaControl, Clappr.Events.MEDIACONTROL_CONTAINERCHANGED, this.onContainerChanged);
     // non-clappr events
-    MouseTrap.addKeycodes({ 144: 'numlock' });
-    // standard keyboard shortcuts
-    MouseTrap.bind('q', () => this.highlightButton(SCALE_SECONDS, -1, BUTTON_STATE_DOWN), 'keydown');
-    MouseTrap.bind('q', () => {
-      this.highlightButton(SCALE_SECONDS, -1, BUTTON_STATE_UP);
-      this.seekRelativeSeconds(-1);
-    }, 'keyup');
-    MouseTrap.bind('w', () => this.highlightButton(SCALE_SECONDS, +1, BUTTON_STATE_DOWN), 'keydown');
-    MouseTrap.bind('w', () => {
-      this.highlightButton(SCALE_SECONDS, +1, BUTTON_STATE_UP);
-      this.seekRelativeSeconds(+1);
-    }, 'keyup');
-    MouseTrap.bind('a', () => this.highlightButton(SCALE_FRAMES, -1, BUTTON_STATE_DOWN), 'keydown');
-    MouseTrap.bind('a', () => {
-      this.highlightButton(SCALE_FRAMES, -1, BUTTON_STATE_UP);
-      this.seekRelativeFrames(-1);
-    }, 'keyup');
-    MouseTrap.bind('s', () => this.highlightButton(SCALE_FRAMES, +1, BUTTON_STATE_DOWN), 'keydown');
-    MouseTrap.bind('s', () => {
-      this.highlightButton(SCALE_FRAMES, +1, BUTTON_STATE_UP);
-      this.seekRelativeFrames(+1);
-    }, 'keyup');
-    MouseTrap.bind('space', () => {
-      if (player.isPlaying()) {
-        player.pause();
-      } else {
-        player.play();
+    Mousetrap.reset();
+    for (let [, userAction] of Object.entries(this.userInputActionsMap)) {
+      for (let [event, callback] of Object.entries(userAction.events)) {
+        Mousetrap.bind(userAction.keys, callback, event);
       }
-    });
-    // shuttle xpress - large wheel with arrow keys fallback(time control)
-    MouseTrap.bind('up', () => this.seekRelativeSeconds(-1));
-    MouseTrap.bind('down', () => this.seekRelativeSeconds(+1));
-    // shuttle xpress - small wheel with arrow keys fallback(time control)
-    MouseTrap.bind('left', () => this.seekRelativeFrames(-1));
-    MouseTrap.bind('right', () => this.seekRelativeFrames(+1));
-    // shuttle xpress - small wheel with ctrl +/- keys combo fallback(frame control)
-    MouseTrap.bind('ctrl+-', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      this.seekRelativeFrames(-1);
-    });
-    MouseTrap.bind(['ctrl+=', 'ctrl+plus'], (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      this.seekRelativeFrames(+1);
-    });
-    // shuttle express - buttons(numeric keys fallback)
-    const switchPlaybackRate = (e, rate) => {
-      e.preventDefault();
-      e.stopPropagation();
-      this.mediaControl.trigger('playbackRate', rate);
-      return false;
-    };
-    MouseTrap.bind('0', (e) => switchPlaybackRate(e, 0.5));
-    MouseTrap.bind(['1', 'numlock+alt+left'], (e) => switchPlaybackRate(e, 1));
-    MouseTrap.bind(['2', 'numlock+ctrl+h'], (e) => switchPlaybackRate(e, 2));
-    MouseTrap.bind(['3', 'ctrl+shift+o', 'numlock+ctrl+i'], (e) => switchPlaybackRate(e, 3));
-    MouseTrap.bind(['4', 'numlock+ctrl+t'], (e) => switchPlaybackRate(e, 4));
-    MouseTrap.bind(['5', 'numlock+alt+right'], (e) => switchPlaybackRate(e, 5));
-    MouseTrap.bind('6', (e) => switchPlaybackRate(e, 6));
-    MouseTrap.bind('7', (e) => switchPlaybackRate(e, 7));
-    MouseTrap.bind('8', (e) => switchPlaybackRate(e, 8));
-    MouseTrap.bind('9', (e) => switchPlaybackRate(e, 9));
+    }
   }
   stopListening() {
     super.stopListening();
@@ -151,6 +255,9 @@ class PlaybackControl extends Clappr.UICorePlugin {
       this.onMouseWheelDelegate.unbind();
       this.onMouseWheelDelegate = null;
     }
+    // remove virtual playback artifacts
+    this.manualPlaybackRate = 0;
+    clearInterval(this.manualPlaybackId);
   }
   render() {
     const style = Clappr.Styler.getStyleFor(PlaybackControlCSS);
@@ -179,7 +286,7 @@ class PlaybackControl extends Clappr.UICorePlugin {
     this.bindEvents();
   }
   getFPS() {
-    let fps = FPS_DEFAULT;
+    let fps = defaults.fps;
     if (this.player && this.player.options && this.player.options.playbackControl) {
       fps = this.player.options.playbackControl.fps || fps;
     }
@@ -222,7 +329,26 @@ class PlaybackControl extends Clappr.UICorePlugin {
     } else if (position > player.getDuration()) {
       position = player.getDuration();
     }
-    player.seek(position);
+    if ((position === null) || isNaN(position)) {
+      console.error('Invalid seek position');
+    } else {
+      player.seek(position);
+    }
+  }
+  seekTime(time) {
+    return this.mediaControl.seekRelative(time);
+  }
+  seekScaleValue(scale, value) {
+    switch (scale) {
+    case SCALE_FRAMES:
+      this.seekRelativeFrames(value);
+      break;
+    case SCALE_SECONDS:
+      this.seekRelativeSeconds(value);
+      break;
+    default:
+      break;
+    }
   }
 }
 
