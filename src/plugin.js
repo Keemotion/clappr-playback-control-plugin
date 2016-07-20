@@ -13,6 +13,18 @@ const SCALE_SECONDS = 'seconds';
 const BUTTON_STATE_DOWN = 'down';
 const BUTTON_STATE_UP = 'up';
 
+const SX_BUTTON_1 = '1';
+const SX_BUTTON_2 = '2';
+const SX_BUTTON_3 = '3';
+const SX_BUTTON_4 = '4';
+const SX_BUTTON_5 = '5';
+
+var buttonSecondsNavMap = {};
+buttonSecondsNavMap[SX_BUTTON_1] = -15;
+buttonSecondsNavMap[SX_BUTTON_2] = -5;
+buttonSecondsNavMap[SX_BUTTON_4] = +5;
+buttonSecondsNavMap[SX_BUTTON_5] = +15;
+
 const defaults = {
   fps: 29
 };
@@ -29,34 +41,13 @@ class PlaybackControl extends Clappr.UICorePlugin {
   get userInputActionsMap() {
     const actions = {
       // frame navigation
-      'nav-second-dec': {
-        keys: ['down'],
-        events: {
-          keydown: () => this.highlightButton(SCALE_SECONDS, -1, BUTTON_STATE_DOWN),
-          keyup: () => {
-            this.highlightButton(SCALE_SECONDS, -1, BUTTON_STATE_UP);
-            this.seekRelativeSeconds(-1);
-          }
-        }
-      },
-      'nav-second-inc': {
-        keys: ['up'],
-        events: {
-          keydown: () => this.highlightButton(SCALE_SECONDS, +1, BUTTON_STATE_DOWN),
-          keyup: () => {
-            this.highlightButton(SCALE_SECONDS, +1, BUTTON_STATE_UP);
-            this.seekRelativeSeconds(+1);
-          }
-        }
-      },
-      // time(second) nagiation
       'nav-frame-dec': {
         keys: ['left'],
         events: {
           keydown: () => this.highlightButton(SCALE_FRAMES, -1, BUTTON_STATE_DOWN),
           keyup: () => {
             this.highlightButton(SCALE_FRAMES, -1, BUTTON_STATE_UP);
-            this.seekRelativeFrames(-1);
+            this.seekScaleValue(SCALE_FRAMES, -1);
           }
         }
       },
@@ -66,7 +57,51 @@ class PlaybackControl extends Clappr.UICorePlugin {
           keydown: () => this.highlightButton(SCALE_FRAMES, +1, BUTTON_STATE_DOWN),
           keyup: () => {
             this.highlightButton(SCALE_FRAMES, +1, BUTTON_STATE_UP);
-            this.seekRelativeFrames(+1);
+            this.seekScaleValue(SCALE_FRAMES, +1);
+          }
+        }
+      },
+      // time(second) nagiation
+      'nav-second-dec': {
+        keys: ['down'],
+        events: {
+          keydown: () => this.highlightButton(SCALE_SECONDS, -1, BUTTON_STATE_DOWN),
+          keyup: () => {
+            this.highlightButton(SCALE_SECONDS, -1, BUTTON_STATE_UP);
+            this.seekScaleValue(SCALE_SECONDS, -1);
+          }
+        }
+      },
+      'nav-second-inc': {
+        keys: ['up'],
+        events: {
+          keydown: () => this.highlightButton(SCALE_SECONDS, +1, BUTTON_STATE_DOWN),
+          keyup: () => {
+            this.highlightButton(SCALE_SECONDS, +1, BUTTON_STATE_UP);
+            this.seekScaleValue(SCALE_SECONDS, +1);
+          }
+        }
+      },
+      // second based navigation jumps
+      'nav-second-jmp': {
+        keys: [
+          'alt+shift+1',
+          'alt+shift+2',
+          'alt+shift+3',
+          'alt+shift+4',
+          'alt+shift+5'
+        ],
+        events: {
+          keydown: (e) => {
+            var commandKey = String.fromCharCode(e.keyCode);
+            if (commandKey === SX_BUTTON_3) {
+              // pause/resume
+              this.togglePlayback();
+            } else {
+              // jump seconds
+              var delta = buttonSecondsNavMap[commandKey];
+              this.seekScaleValue(SCALE_SECONDS, delta);
+            }
           }
         }
       },
@@ -74,13 +109,7 @@ class PlaybackControl extends Clappr.UICorePlugin {
       'playback-pauseresume': {
         keys: ['p'],
         events: {
-          keypress: () => {
-            if (this.player.isPlaying()) {
-              this.player.pause();
-            } else {
-              this.player.play();
-            }
-          }
+          keypress: () => this.togglePlayback
         }
       },
       'playback-switchrate': {
@@ -92,7 +121,7 @@ class PlaybackControl extends Clappr.UICorePlugin {
           'ctrl+shift+alt+6',
           'ctrl+shift+alt+7',
           'ctrl+shift+alt+8',
-          'ctrl+shift+1',
+          'ctrl+shift+1', // reset to pause
           'ctrl+shift+2',
           'ctrl+shift+3',
           'ctrl+shift+4',
@@ -106,7 +135,6 @@ class PlaybackControl extends Clappr.UICorePlugin {
             var value = String.fromCharCode(e.keyCode);
             var sign = e.altKey ? -1 : 1;
             var rate = (Number(value) - 1) * sign;
-            // console.log(e, 'switched playback rate to', e.keyCode, value, rate);
             this.mediaControl.trigger('playbackRate', rate);
           }
         }
@@ -114,21 +142,16 @@ class PlaybackControl extends Clappr.UICorePlugin {
     };
     return actions;
   }
+  togglePlayback() {
+    if (this.player.isPlaying()) {
+      this.player.pause();
+    } else {
+      this.player.play();
+    }
+  }
   // methods
   onContainerChanged() {
     this.invalidate();
-  }
-  seekScaleValue(scale, value) {
-    switch (scale) {
-    case SCALE_FRAMES:
-      this.seekRelativeFrames(value);
-      break;
-    case SCALE_SECONDS:
-      this.seekRelativeSeconds(value);
-      break;
-    default:
-      break;
-    }
   }
   findButton(scale, value) {
     const signed = value > 0 ? `+${value}` : value;
@@ -255,7 +278,24 @@ class PlaybackControl extends Clappr.UICorePlugin {
     } else if (position > player.getDuration()) {
       position = player.getDuration();
     }
-    player.seek(position);
+    if ((position === null) || isNaN(position)) {
+      console.error('Invalid seek position');
+    } else {
+      player.seek(position);
+    }
+  }
+  seekScaleValue(scale, value) {
+    console.debug('asked to seek scale', scale, value);
+    switch (scale) {
+    case SCALE_FRAMES:
+      this.seekRelativeFrames(value);
+      break;
+    case SCALE_SECONDS:
+      this.seekRelativeSeconds(value);
+      break;
+    default:
+      break;
+    }
   }
 }
 
