@@ -50,7 +50,7 @@ module.exports = {
   devtool: devtool,
   plugins: pluginsList,
   externals: {
-    'clappr': 'clappr',
+    'clappr': 'Clappr',
     'clappr-zepto': 'clappr-zepto'
   },
   module: {

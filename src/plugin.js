@@ -1,7 +1,7 @@
 /* global PLUGIN_VERSION */
 // node
 // vendors
-import Clappr from 'clappr';
+import { UICorePlugin, template, Events, Styler } from 'clappr';
 import Mousetrap from 'mousetrap';
 // project
 import PlaybackControlHTML from './view.html';
@@ -48,11 +48,11 @@ const defaults = {
   fps: 29
 };
 
-class PlaybackControl extends Clappr.UICorePlugin {
+class PlaybackControl extends UICorePlugin {
   // properties
   get name() { return 'playback_control'; }
   get version() { return PLUGIN_VERSION; }
-  get template() { return Clappr.template(PlaybackControlHTML); }
+  get template() { return template(PlaybackControlHTML); }
   get attributes() { return { class: 'playback-control' }; }
   get mediaControl() { return this.core.mediaControl; }
   get playback() { return this.core.getCurrentPlayback(); }
@@ -238,8 +238,8 @@ class PlaybackControl extends Clappr.UICorePlugin {
   bindEvents() {
     // discard default clappr events
     // const config = this.config;
-    this.listenTo(this.mediaControl, Clappr.Events.MEDIACONTROL_RENDERED, this.render);
-    this.listenTo(this.mediaControl, Clappr.Events.MEDIACONTROL_CONTAINERCHANGED, this.onContainerChanged);
+    this.listenTo(this.mediaControl, Events.MEDIACONTROL_RENDERED, this.render);
+    this.listenTo(this.mediaControl, Events.MEDIACONTROL_CONTAINERCHANGED, this.onContainerChanged);
     // non-clappr events
     Mousetrap.reset();
     for (let [, userAction] of Object.entries(this.userInputActionsMap)) {
@@ -260,7 +260,7 @@ class PlaybackControl extends Clappr.UICorePlugin {
     clearInterval(this.manualPlaybackId);
   }
   render() {
-    const style = Clappr.Styler.getStyleFor(PlaybackControlCSS);
+    const style = Styler.getStyleFor(PlaybackControlCSS);
     this.$el
       .html(this.template())
       .append(style);

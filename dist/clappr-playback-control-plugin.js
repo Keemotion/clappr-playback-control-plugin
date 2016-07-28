@@ -1,12 +1,12 @@
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
-		module.exports = factory(require("clappr"));
+		module.exports = factory(require("Clappr"));
 	else if(typeof define === 'function' && define.amd)
-		define(["clappr"], factory);
+		define(["Clappr"], factory);
 	else if(typeof exports === 'object')
-		exports["PlaybackControlPlugin"] = factory(require("clappr"));
+		exports["PlaybackControlPlugin"] = factory(require("Clappr"));
 	else
-		root["PlaybackControlPlugin"] = factory(root["clappr"]);
+		root["PlaybackControlPlugin"] = factory(root["Clappr"]);
 })(this, function(__WEBPACK_EXTERNAL_MODULE_5__) {
 return /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
@@ -70,8 +70,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	var _get = function get(object, property, receiver) { if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { return get(parent, property, receiver); } } else if ("value" in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } };
 	
 	var _clappr = __webpack_require__(/*! clappr */ 5);
-	
-	var _clappr2 = _interopRequireDefault(_clappr);
 	
 	var _mousetrap = __webpack_require__(/*! mousetrap */ 4);
 	
@@ -139,8 +137,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	  fps: 29
 	};
 	
-	var PlaybackControl = function (_Clappr$UICorePlugin) {
-	  _inherits(PlaybackControl, _Clappr$UICorePlugin);
+	var PlaybackControl = function (_UICorePlugin) {
+	  _inherits(PlaybackControl, _UICorePlugin);
 	
 	  function PlaybackControl() {
 	    _classCallCheck(this, PlaybackControl);
@@ -242,8 +240,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    value: function bindEvents() {
 	      // discard default clappr events
 	      // const config = this.config;
-	      this.listenTo(this.mediaControl, _clappr2.default.Events.MEDIACONTROL_RENDERED, this.render);
-	      this.listenTo(this.mediaControl, _clappr2.default.Events.MEDIACONTROL_CONTAINERCHANGED, this.onContainerChanged);
+	      this.listenTo(this.mediaControl, _clappr.Events.MEDIACONTROL_RENDERED, this.render);
+	      this.listenTo(this.mediaControl, _clappr.Events.MEDIACONTROL_CONTAINERCHANGED, this.onContainerChanged);
 	      // non-clappr events
 	      _mousetrap2.default.reset();
 	      var _iteratorNormalCompletion = true;
@@ -314,7 +312,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }, {
 	    key: 'render',
 	    value: function render() {
-	      var style = _clappr2.default.Styler.getStyleFor(_style2.default);
+	      var style = _clappr.Styler.getStyleFor(_style2.default);
 	      this.$el.html(this.template()).append(style);
 	      this.$el.find('[type="button"]').off('click').on('click', this.onButtonClick.bind(this));
 	      this.$el.find('.playback-control-actions').off('DOMMouseScroll').on('DOMMouseScroll', this.onActionsMouseWheel.bind(this));
@@ -418,7 +416,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }, {
 	    key: 'template',
 	    get: function get() {
-	      return _clappr2.default.template(_view2.default);
+	      return (0, _clappr.template)(_view2.default);
 	    }
 	  }, {
 	    key: 'attributes',
@@ -546,7 +544,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }]);
 	
 	  return PlaybackControl;
-	}(_clappr2.default.UICorePlugin);
+	}(_clappr.UICorePlugin);
 	
 	exports.default = PlaybackControl;
 
@@ -1685,7 +1683,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ },
 /* 5 */
 /*!*************************!*\
-  !*** external "clappr" ***!
+  !*** external "Clappr" ***!
   \*************************/
 /***/ function(module, exports) {
 
