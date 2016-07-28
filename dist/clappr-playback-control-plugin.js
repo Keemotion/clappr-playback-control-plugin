@@ -310,7 +310,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	      // remove virtual playback artifacts
 	      this.manualPlaybackRate = 0;
 	      clearInterval(this.manualPlaybackId);
-	      console.log('stop listening');
 	    }
 	  }, {
 	    key: 'render',
